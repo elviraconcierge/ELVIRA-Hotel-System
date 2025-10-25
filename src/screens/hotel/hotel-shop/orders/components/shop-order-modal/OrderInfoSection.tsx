@@ -1,7 +1,10 @@
+import { useMemo, useCallback } from "react";
 import {
   ModalFormSection,
   ModalFormField,
-} from "../../../../../../components/ui/modalform";
+  StatusBadge,
+} from "../../../../../../components/ui";
+import { useUpdateShopOrderStatus } from "../../../../../../hooks/hotel-shop";
 import type { ShopOrderWithDetails } from "../../../../../../hooks/hotel-shop/shop-orders/useShopOrders";
 
 interface OrderInfoSectionProps {
@@ -9,6 +12,37 @@ interface OrderInfoSectionProps {
 }
 
 export function OrderInfoSection({ order }: OrderInfoSectionProps) {
+  const updateStatus = useUpdateShopOrderStatus();
+
+  // Status options for shop orders (memoized)
+  const orderStatusOptions = useMemo(
+    () => [
+      "pending",
+      "confirmed",
+      "preparing",
+      "ready",
+      "delivered",
+      "completed",
+      "cancelled",
+    ],
+    []
+  );
+
+  // Handle status change (wrapped in useCallback)
+  const handleStatusChange = useCallback(
+    async (newStatus: string) => {
+      try {
+        await updateStatus.mutateAsync({
+          id: order.id,
+          status: newStatus,
+        });
+      } catch (error) {
+        console.error("Failed to update shop order status:", error);
+      }
+    },
+    [updateStatus, order.id]
+  );
+
   return (
     <ModalFormSection title="Order Information">
       <div className="grid grid-cols-2 gap-4">
@@ -16,7 +50,14 @@ export function OrderInfoSection({ order }: OrderInfoSectionProps) {
           label="Order ID"
           value={order.id.substring(0, 8).toUpperCase()}
         />
-        <ModalFormField label="Status" value={order.status} />
+        <div className="flex flex-col">
+          <span className="text-sm font-medium text-gray-700 mb-1">Status</span>
+          <StatusBadge
+            status={order.status}
+            statusOptions={orderStatusOptions}
+            onStatusChange={handleStatusChange}
+          />
+        </div>
         <ModalFormField
           label="Guest"
           value={order.guests?.guest_name || "N/A"}

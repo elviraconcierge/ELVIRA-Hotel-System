@@ -1,5 +1,5 @@
 import type { TableColumn } from "../../../../../components/ui/tables/types";
-import { RecommendedToggle } from "../../../../../components/ui";
+import { StatusBadge, RecommendedToggle } from "../../../../../components/ui";
 
 interface Place {
   id: string;
@@ -101,17 +101,7 @@ export function createPlaceColumns({
       key: "business_status",
       label: "Status",
       render: (_value: unknown, place: Place) => (
-        <span
-          className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-            place.business_status === "OPERATIONAL"
-              ? "bg-green-100 text-green-800"
-              : place.business_status === "CLOSED_TEMPORARILY"
-              ? "bg-yellow-100 text-yellow-800"
-              : "bg-red-100 text-red-800"
-          }`}
-        >
-          {place.business_status || "Unknown"}
-        </span>
+        <StatusBadge status={place.business_status || "unknown"} />
       ),
     },
     {

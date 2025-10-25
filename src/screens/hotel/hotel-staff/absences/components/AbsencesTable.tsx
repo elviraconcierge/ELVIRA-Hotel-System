@@ -1,6 +1,11 @@
-import { useMemo } from "react";
-import { type TableColumn, DataTable } from "../../../../../components/ui";
+import { useMemo, useCallback } from "react";
+import {
+  type TableColumn,
+  DataTable,
+  StatusBadge,
+} from "../../../../../components/ui";
 import { useCurrentHotelAbsences } from "../../../../../hooks/hotel-staff";
+import { useUpdateAbsenceRequest } from "../../../../../hooks/hotel-staff/absences/useAbsences";
 import type { Database } from "../../../../../types/database";
 
 type AbsenceRequestRow =
@@ -39,6 +44,24 @@ interface AbsencesTableProps {
 
 export function AbsencesTable({ searchValue, onRowClick }: AbsencesTableProps) {
   const { data: absencesData, isLoading, error } = useCurrentHotelAbsences();
+  const updateAbsenceRequest = useUpdateAbsenceRequest();
+
+  // Status options for absence requests (memoized)
+  const absenceStatusOptions = useMemo(
+    () => ["pending", "approved", "rejected", "cancelled"],
+    []
+  );
+
+  // Handle status change (wrapped in useCallback)
+  const handleStatusChange = useCallback(
+    async (requestId: string, newStatus: string) => {
+      await updateAbsenceRequest.mutateAsync({
+        requestId,
+        updates: { status: newStatus },
+      });
+    },
+    [updateAbsenceRequest]
+  );
 
   // Define table columns
   const columns: TableColumn<AbsenceRequest>[] = useMemo(
@@ -86,32 +109,18 @@ export function AbsencesTable({ searchValue, onRowClick }: AbsencesTableProps) {
         key: "status",
         label: "Status",
         sortable: true,
-        render: (value) => {
-          const colors: Record<string, string> = {
-            pending: "bg-yellow-100 text-yellow-800",
-            approved: "bg-green-100 text-green-800",
-            rejected: "bg-red-100 text-red-800",
-            cancelled: "bg-gray-100 text-gray-800",
-          };
-          const labels: Record<string, string> = {
-            pending: "Pending",
-            approved: "Approved",
-            rejected: "Rejected",
-            cancelled: "Cancelled",
-          };
-          return (
-            <span
-              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                colors[String(value)] || colors.pending
-              }`}
-            >
-              {labels[String(value)] || String(value)}
-            </span>
-          );
-        },
+        render: (value, row) => (
+          <StatusBadge
+            status={String(value)}
+            statusOptions={absenceStatusOptions}
+            onStatusChange={(newStatus: string) =>
+              handleStatusChange(row.id, newStatus)
+            }
+          />
+        ),
       },
     ],
-    []
+    [absenceStatusOptions, handleStatusChange]
   );
 
   // Transform raw data into table format

@@ -1,74 +1,159 @@
-import { useState } from "react";
-
 interface StatusBadgeProps {
-  status: "active" | "inactive";
-  onToggle: (newStatus: boolean) => Promise<void>;
+  status: string;
+  variant?: "default" | "success" | "warning" | "danger" | "info";
+  colorMap?: Record<string, string>;
+  showDot?: boolean;
+  // Interactive props
+  statusOptions?: string[];
+  onStatusChange?: (newStatus: string) => Promise<void>;
+  // Toggle props (for active/inactive)
+  onToggle?: (newStatus: boolean) => Promise<void>;
   disabled?: boolean;
 }
 
+const defaultColors: Record<string, string> = {
+  active: "bg-emerald-100 text-emerald-800",
+  inactive: "bg-gray-100 text-gray-800",
+  on_leave: "bg-red-100 text-red-800",
+  pending: "bg-yellow-100 text-yellow-800",
+  approved: "bg-emerald-100 text-emerald-800",
+  rejected: "bg-red-100 text-red-800",
+  cancelled: "bg-gray-100 text-gray-800",
+  completed: "bg-blue-100 text-blue-800",
+  "in-progress": "bg-blue-100 text-blue-800",
+  delivered: "bg-emerald-100 text-emerald-800",
+  preparing: "bg-yellow-100 text-yellow-800",
+  operational: "bg-emerald-100 text-emerald-800",
+  closed_temporarily: "bg-yellow-100 text-yellow-800",
+  unknown: "bg-gray-100 text-gray-800",
+};
+
+const dotColors: Record<string, string> = {
+  active: "bg-emerald-600",
+  inactive: "bg-gray-600",
+  on_leave: "bg-red-600",
+  pending: "bg-yellow-600",
+  approved: "bg-emerald-600",
+  rejected: "bg-red-600",
+  cancelled: "bg-gray-600",
+  completed: "bg-blue-600",
+  "in-progress": "bg-blue-600",
+  delivered: "bg-emerald-600",
+  preparing: "bg-yellow-600",
+  operational: "bg-emerald-600",
+  closed_temporarily: "bg-yellow-600",
+  unknown: "bg-gray-600",
+};
+
 export function StatusBadge({
   status,
+  variant,
+  colorMap = defaultColors,
+  showDot = true,
+  statusOptions,
+  onStatusChange,
   onToggle,
   disabled = false,
 }: StatusBadgeProps) {
-  const [isUpdating, setIsUpdating] = useState(false);
+  const normalizedStatus = status.toLowerCase().replace(/\s+/g, "_");
 
-  const handleClick = async () => {
-    if (disabled || isUpdating) return;
+  // Determine interaction type
+  const isToggle = onToggle && (status === "active" || status === "inactive");
+  const isCycle = statusOptions && statusOptions.length > 0 && onStatusChange;
+  const isInteractive = isToggle || isCycle;
 
-    setIsUpdating(true);
-    try {
-      const newStatus = status === "inactive";
-      await onToggle(newStatus);
-    } catch (error) {
-} finally {
-      setIsUpdating(false);
-    }
+  // Handle toggle (active/inactive)
+  const handleToggleClick = (e: React.MouseEvent) => {
+    if (disabled || !onToggle) return;
+    e.stopPropagation();
+
+    const newStatus = status === "inactive";
+    onToggle(newStatus).catch((error) => {
+      console.error("Failed to toggle status:", error);
+    });
   };
 
-  const isActive = status === "active";
+  // Handle cycle through statuses
+  const handleCycleClick = (e: React.MouseEvent) => {
+    if (disabled || !onStatusChange || !statusOptions) return;
+    e.stopPropagation();
 
+    const currentIndex = statusOptions.findIndex(
+      (opt) =>
+        opt.toLowerCase() === status.toLowerCase() ||
+        opt.toLowerCase().replace(/\s+/g, "_") === normalizedStatus
+    );
+
+    const nextIndex = (currentIndex + 1) % statusOptions.length;
+    const nextStatus = statusOptions[nextIndex];
+
+    onStatusChange(nextStatus).catch((error) => {
+      console.error("Failed to update status:", error);
+    });
+  };
+
+  const getColorClass = () => {
+    if (variant) {
+      const variantColors = {
+        default: "bg-gray-100 text-gray-800",
+        success: "bg-emerald-100 text-emerald-800",
+        warning: "bg-yellow-100 text-yellow-800",
+        danger: "bg-red-100 text-red-800",
+        info: "bg-blue-100 text-blue-800",
+      };
+      return variantColors[variant];
+    }
+    return colorMap[normalizedStatus] || defaultColors.active;
+  };
+
+  const getDotColor = () => {
+    if (variant) {
+      const variantDotColors = {
+        default: "bg-gray-600",
+        success: "bg-emerald-600",
+        warning: "bg-yellow-600",
+        danger: "bg-red-600",
+        info: "bg-blue-600",
+      };
+      return variantDotColors[variant];
+    }
+    return dotColors[normalizedStatus] || dotColors.active;
+  };
+
+  const formatStatus = (str: string) => {
+    return str.replace(/_/g, " ").replace(/-/g, " ").toUpperCase();
+  };
+
+  // Render interactive button
+  if (isInteractive) {
+    return (
+      <button
+        type="button"
+        onClick={isToggle ? handleToggleClick : handleCycleClick}
+        disabled={disabled}
+        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${getColorClass()} ${
+          !disabled
+            ? "cursor-pointer hover:opacity-80"
+            : "opacity-50 cursor-not-allowed"
+        }`}
+      >
+        {showDot && (
+          <span className={`w-1.5 h-1.5 rounded-full ${getDotColor()}`} />
+        )}
+        {formatStatus(status)}
+      </button>
+    );
+  }
+
+  // Render read-only span
   return (
-    <button
-      onClick={handleClick}
-      disabled={disabled || isUpdating}
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
-        isActive
-          ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
-          : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-      } ${
-        disabled || isUpdating
-          ? "opacity-50 cursor-not-allowed"
-          : "cursor-pointer"
-      }`}
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${getColorClass()}`}
     >
-      {isUpdating ? (
-        <>
-          <svg
-            className="animate-spin -ml-0.5 mr-1.5 h-3 w-3"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            ></circle>
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            ></path>
-          </svg>
-          Updating...
-        </>
-      ) : (
-        <>{isActive ? "Active" : "Inactive"}</>
+      {showDot && (
+        <span className={`w-1.5 h-1.5 rounded-full ${getDotColor()}`} />
       )}
-    </button>
+      {formatStatus(status)}
+    </span>
   );
 }

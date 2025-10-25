@@ -1,9 +1,14 @@
-import { useMemo, useState } from "react";
-import { Table, type TableColumn } from "../../../../../components/ui";
+import { useMemo, useState, useCallback } from "react";
+import {
+  Table,
+  type TableColumn,
+  StatusBadge,
+} from "../../../../../components/ui";
 import {
   useAmenityRequests,
   type AmenityRequestWithDetails,
 } from "../../../../../hooks/amenities/amenity-requests/useAmenityRequests";
+import { useUpdateAmenityRequestStatus } from "../../../../../hooks/amenities";
 import { useHotelId } from "../../../../../hooks/useHotelContext";
 import { AmenityRequestModal } from "./amenity-request-modal";
 
@@ -38,6 +43,29 @@ export function AmenityOrdersTable({ searchValue }: AmenityOrdersTableProps) {
     error,
   } = useAmenityRequests(hotelId || undefined);
 
+  const updateStatus = useUpdateAmenityRequestStatus();
+
+  // Status options for amenity orders (memoized)
+  const orderStatusOptions = useMemo(
+    () => ["pending", "approved", "rejected", "completed", "cancelled"],
+    []
+  );
+
+  // Handle status change (wrapped in useCallback)
+  const handleStatusChange = useCallback(
+    async (requestId: string, newStatus: string) => {
+      try {
+        await updateStatus.mutateAsync({
+          id: requestId,
+          status: newStatus,
+        });
+      } catch (error) {
+        console.error("Failed to update amenity order status:", error);
+      }
+    },
+    [updateStatus]
+  );
+
   // Handle row click to open details modal
   const handleRowClick = (row: AmenityOrder) => {
     const fullRequest = amenityRequests?.find(
@@ -66,38 +94,50 @@ export function AmenityOrdersTable({ searchValue }: AmenityOrdersTableProps) {
   };
 
   // Define table columns for amenity orders
-  const orderColumns: TableColumn<AmenityOrder>[] = [
-    {
-      key: "requestId",
-      label: "Request ID",
-      sortable: true,
-    },
-    {
-      key: "amenity",
-      label: "Amenity",
-      sortable: true,
-    },
-    {
-      key: "guest",
-      label: "Guest",
-      sortable: true,
-    },
-    {
-      key: "room",
-      label: "Room",
-      sortable: true,
-    },
-    {
-      key: "status",
-      label: "Status",
-      sortable: true,
-    },
-    {
-      key: "created",
-      label: "Created",
-      sortable: true,
-    },
-  ];
+  const orderColumns: TableColumn<AmenityOrder>[] = useMemo(
+    () => [
+      {
+        key: "requestId",
+        label: "Request ID",
+        sortable: true,
+      },
+      {
+        key: "amenity",
+        label: "Amenity",
+        sortable: true,
+      },
+      {
+        key: "guest",
+        label: "Guest",
+        sortable: true,
+      },
+      {
+        key: "room",
+        label: "Room",
+        sortable: true,
+      },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        render: (value, row) => (
+          <StatusBadge
+            status={String(value)}
+            statusOptions={orderStatusOptions}
+            onStatusChange={(newStatus) =>
+              handleStatusChange(row.id, newStatus)
+            }
+          />
+        ),
+      },
+      {
+        key: "created",
+        label: "Created",
+        sortable: true,
+      },
+    ],
+    [orderStatusOptions, handleStatusChange]
+  );
 
   // Transform database data to table format with search filtering
   const orderData: AmenityOrder[] = useMemo(() => {

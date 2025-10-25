@@ -1,9 +1,14 @@
-import { useMemo, useState } from "react";
-import { Table, type TableColumn } from "../../../../../components/ui";
+import { useMemo, useState, useCallback } from "react";
+import {
+  Table,
+  type TableColumn,
+  StatusBadge,
+} from "../../../../../components/ui";
 import {
   useDineInOrders,
   type DineInOrderWithDetails,
 } from "../../../../../hooks/hotel-restaurant/dine-in-orders/useDineInOrders";
+import { useUpdateDineInOrderStatus } from "../../../../../hooks/hotel-restaurant";
 import { useHotelId } from "../../../../../hooks/useHotelContext";
 import { RestaurantOrderModal } from "./restaurant-order-modal";
 
@@ -41,6 +46,39 @@ export function RestaurantOrdersTable({
     error,
   } = useDineInOrders(hotelId || undefined);
 
+  const updateStatus = useUpdateDineInOrderStatus();
+
+  // Status options for restaurant orders (memoized)
+  const orderStatusOptions = useMemo(
+    () => [
+      "pending",
+      "confirmed",
+      "preparing",
+      "ready",
+      "delivered",
+      "completed",
+      "cancelled",
+    ],
+    []
+  );
+
+  // Handle status change (wrapped in useCallback)
+  const handleStatusChange = useCallback(
+    async (orderId: string, newStatus: string) => {
+      if (!hotelId) return;
+      try {
+        await updateStatus.mutateAsync({
+          id: orderId,
+          status: newStatus,
+          hotelId,
+        });
+      } catch (error) {
+        console.error("Failed to update restaurant order status:", error);
+      }
+    },
+    [updateStatus, hotelId]
+  );
+
   // Handle row click to open details modal
   const handleRowClick = (row: RestaurantOrder) => {
     const fullOrder = dineInOrders?.find((order) => order.id === row.id);
@@ -67,43 +105,55 @@ export function RestaurantOrdersTable({
   };
 
   // Define table columns for restaurant orders
-  const columns: TableColumn<RestaurantOrder>[] = [
-    {
-      key: "orderId",
-      label: "Order ID",
-      sortable: true,
-    },
-    {
-      key: "type",
-      label: "Type",
-      sortable: true,
-    },
-    {
-      key: "items",
-      label: "Items",
-      sortable: true,
-    },
-    {
-      key: "guest",
-      label: "Guest",
-      sortable: true,
-    },
-    {
-      key: "room",
-      label: "Room",
-      sortable: true,
-    },
-    {
-      key: "status",
-      label: "Status",
-      sortable: true,
-    },
-    {
-      key: "created",
-      label: "Created",
-      sortable: true,
-    },
-  ];
+  const columns: TableColumn<RestaurantOrder>[] = useMemo(
+    () => [
+      {
+        key: "orderId",
+        label: "Order ID",
+        sortable: true,
+      },
+      {
+        key: "type",
+        label: "Type",
+        sortable: true,
+      },
+      {
+        key: "items",
+        label: "Items",
+        sortable: true,
+      },
+      {
+        key: "guest",
+        label: "Guest",
+        sortable: true,
+      },
+      {
+        key: "room",
+        label: "Room",
+        sortable: true,
+      },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        render: (value, row) => (
+          <StatusBadge
+            status={String(value)}
+            statusOptions={orderStatusOptions}
+            onStatusChange={(newStatus) =>
+              handleStatusChange(row.id, newStatus)
+            }
+          />
+        ),
+      },
+      {
+        key: "created",
+        label: "Created",
+        sortable: true,
+      },
+    ],
+    [orderStatusOptions, handleStatusChange]
+  );
 
   // Transform database data to table format with search filtering
   const orderData: RestaurantOrder[] = useMemo(() => {

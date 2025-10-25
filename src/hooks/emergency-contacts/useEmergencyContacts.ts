@@ -27,7 +27,6 @@ export function useEmergencyContacts(hotelId: string | undefined) {
         .from("emergency_contacts")
         .select("*")
         .eq("hotel_id", hotelId)
-        .eq("is_active", true)
         .order("contact_name", { ascending: true });
 
       if (error) throw error;

@@ -1,9 +1,14 @@
-import { useMemo, useState } from "react";
-import { Table, type TableColumn } from "../../../../../components/ui";
+import { useMemo, useState, useCallback } from "react";
+import {
+  Table,
+  type TableColumn,
+  StatusBadge,
+} from "../../../../../components/ui";
 import {
   useShopOrders,
   type ShopOrderWithDetails,
 } from "../../../../../hooks/hotel-shop/shop-orders/useShopOrders";
+import { useUpdateShopOrderStatus } from "../../../../../hooks/hotel-shop";
 import { useHotelId } from "../../../../../hooks/useHotelContext";
 import { ShopOrderModal } from "./shop-order-modal";
 
@@ -38,6 +43,37 @@ export function ShopOrdersTable({ searchValue }: ShopOrdersTableProps) {
     error,
   } = useShopOrders(hotelId || undefined);
 
+  const updateStatus = useUpdateShopOrderStatus();
+
+  // Status options for shop orders (memoized)
+  const orderStatusOptions = useMemo(
+    () => [
+      "pending",
+      "confirmed",
+      "preparing",
+      "ready",
+      "delivered",
+      "completed",
+      "cancelled",
+    ],
+    []
+  );
+
+  // Handle status change (wrapped in useCallback)
+  const handleStatusChange = useCallback(
+    async (orderId: string, newStatus: string) => {
+      try {
+        await updateStatus.mutateAsync({
+          id: orderId,
+          status: newStatus,
+        });
+      } catch (error) {
+        console.error("Failed to update shop order status:", error);
+      }
+    },
+    [updateStatus]
+  );
+
   // Handle row click to open details modal
   const handleRowClick = (row: ShopOrder) => {
     const fullOrder = shopOrders?.find((order) => order.id === row.id);
@@ -64,38 +100,50 @@ export function ShopOrdersTable({ searchValue }: ShopOrdersTableProps) {
   };
 
   // Define table columns for shop orders
-  const columns: TableColumn<ShopOrder>[] = [
-    {
-      key: "orderId",
-      label: "Order ID",
-      sortable: true,
-    },
-    {
-      key: "items",
-      label: "Items",
-      sortable: true,
-    },
-    {
-      key: "guest",
-      label: "Guest",
-      sortable: true,
-    },
-    {
-      key: "room",
-      label: "Room",
-      sortable: true,
-    },
-    {
-      key: "status",
-      label: "Status",
-      sortable: true,
-    },
-    {
-      key: "createdAt",
-      label: "Created At",
-      sortable: true,
-    },
-  ];
+  const columns: TableColumn<ShopOrder>[] = useMemo(
+    () => [
+      {
+        key: "orderId",
+        label: "Order ID",
+        sortable: true,
+      },
+      {
+        key: "items",
+        label: "Items",
+        sortable: true,
+      },
+      {
+        key: "guest",
+        label: "Guest",
+        sortable: true,
+      },
+      {
+        key: "room",
+        label: "Room",
+        sortable: true,
+      },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        render: (value, row) => (
+          <StatusBadge
+            status={String(value)}
+            statusOptions={orderStatusOptions}
+            onStatusChange={(newStatus) =>
+              handleStatusChange(row.id, newStatus)
+            }
+          />
+        ),
+      },
+      {
+        key: "createdAt",
+        label: "Created At",
+        sortable: true,
+      },
+    ],
+    [orderStatusOptions, handleStatusChange]
+  );
 
   // Transform database data to table format with search filtering
   const orderData: ShopOrder[] = useMemo(() => {

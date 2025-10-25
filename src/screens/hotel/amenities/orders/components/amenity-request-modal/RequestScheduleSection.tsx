@@ -1,8 +1,7 @@
-import { ModalFormSection } from "../../../../../../components/ui";
-import {
-  OrderField,
-  OrderStatusBadge,
-} from "../../../../../../components/ui/forms/order-details";
+import { useMemo, useCallback } from "react";
+import { ModalFormSection, StatusBadge } from "../../../../../../components/ui";
+import { OrderField } from "../../../../../../components/ui/forms/order-details";
+import { useUpdateAmenityRequestStatus } from "../../../../../../hooks/amenities";
 import type { AmenityRequestSectionProps } from "./types";
 
 /**
@@ -12,6 +11,29 @@ import type { AmenityRequestSectionProps } from "./types";
 export function RequestScheduleSection({
   request,
 }: AmenityRequestSectionProps) {
+  const updateStatus = useUpdateAmenityRequestStatus();
+
+  // Status options for amenity orders (memoized)
+  const orderStatusOptions = useMemo(
+    () => ["pending", "approved", "rejected", "completed", "cancelled"],
+    []
+  );
+
+  // Handle status change (wrapped in useCallback)
+  const handleStatusChange = useCallback(
+    async (newStatus: string) => {
+      try {
+        await updateStatus.mutateAsync({
+          id: request.id,
+          status: newStatus,
+        });
+      } catch (error) {
+        console.error("Failed to update amenity order status:", error);
+      }
+    },
+    [updateStatus, request.id]
+  );
+
   // Format date and time
   const formatDateTime = (date: string, time: string | null) => {
     const dateObj = new Date(date);
@@ -50,7 +72,11 @@ export function RequestScheduleSection({
         <span className="text-sm font-medium text-gray-500 uppercase tracking-wide">
           Status
         </span>
-        <OrderStatusBadge status={request.status} />
+        <StatusBadge
+          status={request.status}
+          statusOptions={orderStatusOptions}
+          onStatusChange={handleStatusChange}
+        />
       </div>
     </ModalFormSection>
   );

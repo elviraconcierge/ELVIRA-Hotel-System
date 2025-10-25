@@ -1,6 +1,11 @@
-import { useMemo } from "react";
-import { type TableColumn, DataTable } from "../../../../../components/ui";
+import { useMemo, useCallback } from "react";
+import {
+  type TableColumn,
+  DataTable,
+  StatusBadge,
+} from "../../../../../components/ui";
 import { useCurrentHotelTasks } from "../../../../../hooks/hotel-staff";
+import { useUpdateTask } from "../../../../../hooks/hotel-staff/task-assignment/useTaskAssignment";
 import type { Database } from "../../../../../types/database";
 
 type TaskRow = Database["public"]["Tables"]["tasks"]["Row"];
@@ -38,6 +43,30 @@ interface TasksTableProps {
 
 export function TasksTable({ searchValue, onRowClick }: TasksTableProps) {
   const { data: tasksData, isLoading, error } = useCurrentHotelTasks();
+  const updateTask = useUpdateTask();
+
+  // Status options for tasks (memoized to prevent re-creation)
+  const taskStatusOptions = useMemo(
+    () => ["PENDING", "IN_PROGRESS", "COMPLETED", "CANCELLED"],
+    []
+  );
+
+  // Handle status change (wrapped in useCallback)
+  const handleStatusChange = useCallback(
+    async (taskId: string, newStatus: string) => {
+      await updateTask.mutateAsync({
+        taskId,
+        updates: {
+          status: newStatus as
+            | "PENDING"
+            | "IN_PROGRESS"
+            | "COMPLETED"
+            | "CANCELLED",
+        },
+      });
+    },
+    [updateTask]
+  );
 
   // Define table columns
   const columns: TableColumn<Task>[] = useMemo(
@@ -82,29 +111,15 @@ export function TasksTable({ searchValue, onRowClick }: TasksTableProps) {
         key: "status",
         label: "Status",
         sortable: true,
-        render: (value) => {
-          const colors = {
-            PENDING: "bg-gray-100 text-gray-800",
-            IN_PROGRESS: "bg-blue-100 text-blue-800",
-            COMPLETED: "bg-green-100 text-green-800",
-            CANCELLED: "bg-red-100 text-red-800",
-          };
-          const labels = {
-            PENDING: "Pending",
-            IN_PROGRESS: "In Progress",
-            COMPLETED: "Completed",
-            CANCELLED: "Cancelled",
-          };
-          return (
-            <span
-              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                colors[value as keyof typeof colors] || colors.PENDING
-              }`}
-            >
-              {labels[value as keyof typeof labels] || String(value)}
-            </span>
-          );
-        },
+        render: (value, row) => (
+          <StatusBadge
+            status={String(value)}
+            statusOptions={taskStatusOptions}
+            onStatusChange={(newStatus) =>
+              handleStatusChange(row.id, newStatus)
+            }
+          />
+        ),
       },
       {
         key: "assignedTo",
@@ -117,7 +132,7 @@ export function TasksTable({ searchValue, onRowClick }: TasksTableProps) {
         sortable: true,
       },
     ],
-    []
+    [taskStatusOptions, handleStatusChange]
   );
 
   // Transform raw data into table format

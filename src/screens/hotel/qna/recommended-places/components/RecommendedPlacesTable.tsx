@@ -1,4 +1,8 @@
-import { Table, type TableColumn } from "../../../../../components/ui";
+import {
+  type TableColumn,
+  Table,
+  StatusBadge,
+} from "../../../../../components/ui";
 import { usePagination } from "../../../../../hooks";
 
 interface RecommendedPlace extends Record<string, unknown> {
@@ -23,6 +27,7 @@ export function RecommendedPlacesTable({
       key: "status",
       label: "Status",
       sortable: true,
+      render: (value) => <StatusBadge status={String(value)} />,
     },
     {
       key: "place",

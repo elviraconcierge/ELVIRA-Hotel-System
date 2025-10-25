@@ -1,5 +1,9 @@
 import { useMemo } from "react";
-import { type TableColumn, DataTable } from "../../../../../components/ui";
+import {
+  type TableColumn,
+  DataTable,
+  StatusBadge,
+} from "../../../../../components/ui";
 import { useCurrentHotelStaff } from "../../../../../hooks/hotel-staff";
 
 interface StaffData {
@@ -51,19 +55,7 @@ export function StaffTable({ searchValue, onRowClick }: StaffTableProps) {
         key: "status",
         label: "Status",
         sortable: true,
-        render: (value) => (
-          <span
-            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-              value === "active"
-                ? "bg-green-100 text-green-800"
-                : value === "inactive"
-                ? "bg-yellow-100 text-yellow-800"
-                : "bg-red-100 text-red-800"
-            }`}
-          >
-            {String(value).charAt(0).toUpperCase() + String(value).slice(1)}
-          </span>
-        ),
+        render: (value) => <StatusBadge status={String(value)} />,
       },
       {
         key: "employeeId",

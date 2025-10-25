@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Table } from "../../../../../components/ui";
+import { Table, StatusBadge } from "../../../../../components/ui";
 import { useHotelRecommendedPlaces } from "../../../../../hooks/third-party-management";
 import { useCurrentUserHotelId } from "../../../../../hooks/useCurrentUserHotel";
 import type { TableColumn } from "../../../../../components/ui/tables/types";
@@ -109,17 +109,7 @@ export function RecommendedPlacesTable({
         key: "business_status",
         label: "Status",
         render: (_value: unknown, place: any) => (
-          <span
-            className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-              place?.business_status === "OPERATIONAL"
-                ? "bg-green-100 text-green-800"
-                : place?.business_status === "CLOSED_TEMPORARILY"
-                ? "bg-yellow-100 text-yellow-800"
-                : "bg-red-100 text-red-800"
-            }`}
-          >
-            {place?.business_status || "Unknown"}
-          </span>
+          <StatusBadge status={place?.business_status || "unknown"} />
         ),
       },
     ],

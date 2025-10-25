@@ -1,4 +1,5 @@
 export { ItemImageUpload } from "./ItemImageUpload";
+export { ItemImageGallery } from "./ItemImageGallery";
 export { ItemBasicInfoForm } from "./ItemBasicInfoForm";
 export { ItemDescriptionForm } from "./ItemDescriptionForm";
 export { ItemRecommendedToggle } from "./ItemRecommendedToggle";

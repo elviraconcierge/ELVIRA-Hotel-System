@@ -1,8 +1,8 @@
-import { ModalFormSection } from "../../../../../../components/ui/modalform";
-import {
-  OrderField,
-  OrderStatusBadge,
-} from "../../../../../../components/ui/forms/order-details";
+import { useMemo, useCallback } from "react";
+import { ModalFormSection, StatusBadge } from "../../../../../../components/ui";
+import { OrderField } from "../../../../../../components/ui/forms/order-details";
+import { useUpdateDineInOrderStatus } from "../../../../../../hooks/hotel-restaurant";
+import { useHotelId } from "../../../../../../hooks/useHotelContext";
 import type { DineInOrderWithDetails } from "../../../../../../hooks/hotel-restaurant/dine-in-orders/useDineInOrders";
 
 interface OrderInfoSectionProps {
@@ -10,6 +10,40 @@ interface OrderInfoSectionProps {
 }
 
 export function OrderInfoSection({ order }: OrderInfoSectionProps) {
+  const hotelId = useHotelId();
+  const updateStatus = useUpdateDineInOrderStatus();
+
+  // Status options for restaurant orders (memoized)
+  const orderStatusOptions = useMemo(
+    () => [
+      "pending",
+      "confirmed",
+      "preparing",
+      "ready",
+      "delivered",
+      "completed",
+      "cancelled",
+    ],
+    []
+  );
+
+  // Handle status change (wrapped in useCallback)
+  const handleStatusChange = useCallback(
+    async (newStatus: string) => {
+      if (!hotelId) return;
+      try {
+        await updateStatus.mutateAsync({
+          id: order.id,
+          status: newStatus,
+          hotelId,
+        });
+      } catch (error) {
+        console.error("Failed to update restaurant order status:", error);
+      }
+    },
+    [updateStatus, order.id, hotelId]
+  );
+
   return (
     <ModalFormSection title="Order Information">
       <div className="space-y-4">
@@ -34,7 +68,11 @@ export function OrderInfoSection({ order }: OrderInfoSectionProps) {
           <span className="text-sm font-medium text-gray-500 uppercase tracking-wide">
             Status
           </span>
-          <OrderStatusBadge status={order.status} />
+          <StatusBadge
+            status={order.status}
+            statusOptions={orderStatusOptions}
+            onStatusChange={handleStatusChange}
+          />
         </div>
 
         <OrderField

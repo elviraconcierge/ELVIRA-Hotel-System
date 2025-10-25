@@ -45,7 +45,8 @@ export function AboutUsModal({
       await onSave(formData);
       onClose();
     } catch (error) {
-} finally {
+      console.error("Failed to save About Us settings:", error);
+    } finally {
       setIsSaving(false);
     }
   };
@@ -74,7 +75,7 @@ export function AboutUsModal({
             onChange={(e) =>
               setFormData({ ...formData, aboutUsText: e.target.value })
             }
-            placeholder="Located one kilometer from Munich Central Station, two kilometers from the Theresienwiese U-Bahn station..."
+            placeholder="Tell guests about your hotel's location, amenities, and what makes it special..."
             rows={6}
             disabled={isSaving}
           />
@@ -93,7 +94,7 @@ export function AboutUsModal({
             onChange={(e) =>
               setFormData({ ...formData, buttonText: e.target.value })
             }
-            placeholder="Visit Us!!"
+            placeholder="Learn More"
             disabled={isSaving}
           />
           <p className="text-xs text-gray-500 mt-1">
@@ -112,7 +113,7 @@ export function AboutUsModal({
             onChange={(e) =>
               setFormData({ ...formData, buttonUrl: e.target.value })
             }
-            placeholder="https://www.wyndhamhotels.com/de-de/trademark/munich-germany/centro-hotel-"
+            placeholder="https://www.yourhotel.com"
             disabled={isSaving}
           />
           <p className="text-xs text-gray-500 mt-1">
