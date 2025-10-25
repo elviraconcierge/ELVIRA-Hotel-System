@@ -22,6 +22,10 @@ interface ShopOrdersTableProps {
 }
 
 export function ShopOrdersTable({ searchValue }: ShopOrdersTableProps) {
+  // Sorting state
+  const [sortColumn, setSortColumn] = useState<string | undefined>(undefined);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
   const hotelId = useHotelId();
   const [selectedOrder, setSelectedOrder] =
     useState<ShopOrderWithDetails | null>(null);
@@ -47,6 +51,16 @@ export function ShopOrdersTable({ searchValue }: ShopOrdersTableProps) {
   const handleCloseModal = () => {
     setIsDetailModalOpen(false);
     setSelectedOrder(null);
+  };
+
+  // Handler for sorting
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
   };
 
   // Define table columns for shop orders
@@ -89,33 +103,57 @@ export function ShopOrdersTable({ searchValue }: ShopOrdersTableProps) {
       return [];
     }
 
-    return shopOrders
-      .filter((order: ShopOrderWithDetails) => {
-        if (!searchValue) return true;
+    const filtered = shopOrders.filter((order: ShopOrderWithDetails) => {
+      if (!searchValue) return true;
 
-        const search = searchValue.toLowerCase();
-        const guestName = order.guests?.guest_name?.toLowerCase() || "";
-        const roomNumber = order.guests?.room_number?.toLowerCase() || "";
+      const search = searchValue.toLowerCase();
+      const guestName = order.guests?.guest_name?.toLowerCase() || "";
+      const roomNumber = order.guests?.room_number?.toLowerCase() || "";
 
-        return (
-          order.id.toLowerCase().includes(search) ||
-          order.status.toLowerCase().includes(search) ||
-          guestName.includes(search) ||
-          roomNumber.includes(search)
-        );
-      })
-      .map((order: ShopOrderWithDetails) => ({
-        id: order.id,
-        orderId: order.id.substring(0, 8).toUpperCase(),
-        items: "View items",
-        guest: order.guests?.guest_name || "N/A",
-        room: order.guests?.room_number || "N/A",
-        status: order.status,
-        createdAt: order.created_at
-          ? new Date(order.created_at).toLocaleString()
-          : "N/A",
-      }));
-  }, [shopOrders, searchValue]);
+      return (
+        order.id.toLowerCase().includes(search) ||
+        order.status.toLowerCase().includes(search) ||
+        guestName.includes(search) ||
+        roomNumber.includes(search)
+      );
+    });
+
+    const transformed = filtered.map((order: ShopOrderWithDetails) => ({
+      id: order.id,
+      orderId: order.id.substring(0, 8).toUpperCase(),
+      items: "View items",
+      guest: order.guests?.guest_name || "N/A",
+      room: order.guests?.room_number || "N/A",
+      status: order.status,
+      createdAt: order.created_at
+        ? new Date(order.created_at).toLocaleString()
+        : "N/A",
+    }));
+
+    // Apply sorting
+    if (sortColumn) {
+      return [...transformed].sort((a, b) => {
+        const aValue = (a as Record<string, unknown>)[sortColumn];
+        const bValue = (b as Record<string, unknown>)[sortColumn];
+
+        if (aValue === null || aValue === undefined) return 1;
+        if (bValue === null || bValue === undefined) return -1;
+
+        let comparison = 0;
+        if (typeof aValue === "number" && typeof bValue === "number") {
+          comparison = aValue - bValue;
+        } else {
+          const aStr = String(aValue).toLowerCase();
+          const bStr = String(bValue).toLowerCase();
+          comparison = aStr.localeCompare(bStr);
+        }
+
+        return sortDirection === "asc" ? comparison : -comparison;
+      });
+    }
+
+    return transformed;
+  }, [shopOrders, searchValue, sortColumn, sortDirection]);
 
   if (error) {
     return (
@@ -144,6 +182,9 @@ export function ShopOrdersTable({ searchValue }: ShopOrdersTableProps) {
           emptyMessage="No shop orders found. Orders will appear here once guests start purchasing items."
           onRowClick={handleRowClick}
           itemsPerPage={10}
+          sortColumn={sortColumn}
+          sortDirection={sortDirection}
+          onSort={handleSort}
         />
       </div>
 

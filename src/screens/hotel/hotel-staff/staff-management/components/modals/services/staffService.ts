@@ -13,6 +13,10 @@ interface CreateStaffParams {
   address?: string;
   dateOfBirth?: string;
   hotelId: string;
+  avatarUrl?: string;
+  emergencyContactName?: string;
+  emergencyContactNumber?: string;
+  gdprConsent?: boolean;
 }
 
 interface CreateStaffResponse {
@@ -37,7 +41,7 @@ export async function createStaffMember(
     );
 
     if (error) {
-throw new Error(error.message || "Failed to create staff member");
+      throw new Error(error.message || "Failed to create staff member");
     }
 
     if (data?.error) {
@@ -46,7 +50,7 @@ throw new Error(error.message || "Failed to create staff member");
 
     return data as CreateStaffResponse;
   } catch (error) {
-throw error;
+    throw error;
   }
 }
 
@@ -63,6 +67,10 @@ interface UpdateStaffParams {
   country?: string;
   address?: string;
   dateOfBirth?: string;
+  avatarUrl?: string;
+  emergencyContactName?: string;
+  emergencyContactNumber?: string;
+  gdprConsent?: boolean;
 }
 
 export async function updateStaffMember(params: UpdateStaffParams) {
@@ -82,12 +90,12 @@ export async function updateStaffMember(params: UpdateStaffParams) {
         .eq("id", staffId);
 
       if (staffError) {
-throw staffError;
+        throw staffError;
       }
     }
 
     // Update hotel_staff_personal_data table
-    const personalDataUpdate: Record<string, string | null> = {};
+    const personalDataUpdate: Record<string, string | boolean | null> = {};
     if (updateData.firstName !== undefined)
       personalDataUpdate.first_name = updateData.firstName;
     if (updateData.lastName !== undefined)
@@ -104,6 +112,16 @@ throw staffError;
       personalDataUpdate.address = updateData.address || null;
     if (updateData.dateOfBirth !== undefined)
       personalDataUpdate.date_of_birth = updateData.dateOfBirth || null;
+    if (updateData.avatarUrl !== undefined)
+      personalDataUpdate.avatar_url = updateData.avatarUrl || null;
+    if (updateData.emergencyContactName !== undefined)
+      personalDataUpdate.emergency_contact_name =
+        updateData.emergencyContactName || null;
+    if (updateData.emergencyContactNumber !== undefined)
+      personalDataUpdate.emergency_contact_number =
+        updateData.emergencyContactNumber || null;
+    if (updateData.gdprConsent !== undefined)
+      personalDataUpdate.gdpr_consent = updateData.gdprConsent;
 
     if (Object.keys(personalDataUpdate).length > 0) {
       const { error: personalError } = await supabase
@@ -112,12 +130,12 @@ throw staffError;
         .eq("staff_id", staffId);
 
       if (personalError) {
-throw personalError;
+        throw personalError;
       }
     }
 
     return { success: true };
   } catch (error) {
-throw error;
+    throw error;
   }
 }

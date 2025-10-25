@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Table,
   type TableColumn,
@@ -31,6 +31,10 @@ interface QnATableProps {
 }
 
 export function QnATable({ searchValue, onView }: QnATableProps) {
+  // Sorting state
+  const [sortColumn, setSortColumn] = useState<string | undefined>(undefined);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
   // Get hotel ID from context
   const { hotelId } = useHotelContext();
 
@@ -52,6 +56,16 @@ export function QnATable({ searchValue, onView }: QnATableProps) {
     }
   };
 
+  // Handler for sorting
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
+  };
+
   // Transform and filter Q&A data
   const qnaData = useMemo(() => {
     const transformedData: QnATableData[] = qnaItems.map((item) => ({
@@ -68,19 +82,42 @@ export function QnATable({ searchValue, onView }: QnATableProps) {
     }));
 
     // Apply search filter
-    if (!searchValue.trim()) {
-      return transformedData;
+    let filtered = transformedData;
+    if (searchValue.trim()) {
+      const searchLower = searchValue.toLowerCase();
+      filtered = transformedData.filter(
+        (item) =>
+          item.category.toLowerCase().includes(searchLower) ||
+          item.question.toLowerCase().includes(searchLower) ||
+          item.answer.toLowerCase().includes(searchLower) ||
+          item.type.toLowerCase().includes(searchLower)
+      );
     }
 
-    const searchLower = searchValue.toLowerCase();
-    return transformedData.filter(
-      (item) =>
-        item.category.toLowerCase().includes(searchLower) ||
-        item.question.toLowerCase().includes(searchLower) ||
-        item.answer.toLowerCase().includes(searchLower) ||
-        item.type.toLowerCase().includes(searchLower)
-    );
-  }, [qnaItems, searchValue]);
+    // Apply sorting
+    if (sortColumn) {
+      filtered = [...filtered].sort((a, b) => {
+        const aValue = (a as Record<string, unknown>)[sortColumn];
+        const bValue = (b as Record<string, unknown>)[sortColumn];
+
+        if (aValue === null || aValue === undefined) return 1;
+        if (bValue === null || bValue === undefined) return -1;
+
+        let comparison = 0;
+        if (typeof aValue === "number" && typeof bValue === "number") {
+          comparison = aValue - bValue;
+        } else {
+          const aStr = String(aValue).toLowerCase();
+          const bStr = String(bValue).toLowerCase();
+          comparison = aStr.localeCompare(bStr);
+        }
+
+        return sortDirection === "asc" ? comparison : -comparison;
+      });
+    }
+
+    return filtered;
+  }, [qnaItems, searchValue, sortColumn, sortDirection]);
 
   // Define table columns for Q&A
   const columns: TableColumn<QnATableData>[] = [
@@ -152,6 +189,9 @@ export function QnATable({ searchValue, onView }: QnATableProps) {
           emptyMessage="No Q&A items found. Add new questions and answers to get started."
           itemsPerPage={10}
           onRowClick={handleRowClick}
+          sortColumn={sortColumn}
+          sortDirection={sortDirection}
+          onSort={handleSort}
         />
       </div>
     </div>

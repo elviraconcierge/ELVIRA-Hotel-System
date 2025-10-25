@@ -15,6 +15,10 @@ interface StaffData {
     city?: string | null;
     zip_code?: string | null;
     country?: string | null;
+    avatar_url?: string | null;
+    emergency_contact_name?: string | null;
+    emergency_contact_number?: string | null;
+    gdpr_consent?: boolean | null;
   };
 }
 
@@ -31,6 +35,10 @@ export interface StaffFormData {
   city: string;
   zipCode: string;
   country: string;
+  avatarUrl: string;
+  emergencyContactName: string;
+  emergencyContactNumber: string;
+  gdprConsent: boolean;
 }
 
 export interface StaffModalProps {
@@ -54,6 +62,7 @@ export interface StaffFormErrors {
   email?: string;
   position?: string;
   department?: string;
+  gdprConsent?: string;
 }
 
 export interface StaffBasicSectionProps {

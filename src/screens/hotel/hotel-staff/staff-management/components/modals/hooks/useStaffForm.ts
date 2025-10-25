@@ -13,6 +13,10 @@ export interface StaffFormData {
   city: string;
   zipCode: string;
   country: string;
+  avatarUrl: string;
+  emergencyContactName: string;
+  emergencyContactNumber: string;
+  gdprConsent: boolean;
 }
 
 export interface StaffFormErrors {
@@ -21,6 +25,7 @@ export interface StaffFormErrors {
   email?: string;
   position?: string;
   department?: string;
+  gdprConsent?: string;
 }
 
 interface StaffData {
@@ -38,6 +43,10 @@ interface StaffData {
     city?: string | null;
     zip_code?: string | null;
     country?: string | null;
+    avatar_url?: string | null;
+    emergency_contact_name?: string | null;
+    emergency_contact_number?: string | null;
+    gdpr_consent?: boolean | null;
   };
 }
 
@@ -55,6 +64,10 @@ export function useStaffForm(editData: StaffData | null) {
     city: "",
     zipCode: "",
     country: "",
+    avatarUrl: "",
+    emergencyContactName: "",
+    emergencyContactNumber: "",
+    gdprConsent: false,
   });
 
   const [errors, setErrors] = useState<StaffFormErrors>({});
@@ -76,6 +89,10 @@ export function useStaffForm(editData: StaffData | null) {
         city: personalData?.city || "",
         zipCode: personalData?.zip_code || "",
         country: personalData?.country || "",
+        avatarUrl: personalData?.avatar_url || "",
+        emergencyContactName: personalData?.emergency_contact_name || "",
+        emergencyContactNumber: personalData?.emergency_contact_number || "",
+        gdprConsent: personalData?.gdpr_consent || false,
       });
     } else {
       setFormData({
@@ -91,6 +108,10 @@ export function useStaffForm(editData: StaffData | null) {
         city: "",
         zipCode: "",
         country: "",
+        avatarUrl: "",
+        emergencyContactName: "",
+        emergencyContactNumber: "",
+        gdprConsent: false,
       });
     }
   }, [editData]);
@@ -132,6 +153,13 @@ export function useStaffForm(editData: StaffData | null) {
       isValid = false;
     }
 
+    // Validate GDPR consent
+    if (!formData.gdprConsent) {
+      newErrors.gdprConsent =
+        "You must accept responsibility for data processing";
+      isValid = false;
+    }
+
     setErrors(newErrors);
     return isValid;
   };
@@ -150,6 +178,10 @@ export function useStaffForm(editData: StaffData | null) {
       city: "",
       zipCode: "",
       country: "",
+      avatarUrl: "",
+      emergencyContactName: "",
+      emergencyContactNumber: "",
+      gdprConsent: false,
     });
     setErrors({});
   };

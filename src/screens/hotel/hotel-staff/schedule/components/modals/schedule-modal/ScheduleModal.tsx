@@ -191,16 +191,9 @@ export function ScheduleModal({
     }
   };
 
-  const handleDeleteClick = async () => {
-    if (schedule && onDelete) {
+  const handleDeleteClick = () => {
+    if (onDelete) {
       onDelete();
-    } else if (schedule) {
-      try {
-        await deleteSchedule.mutateAsync(schedule.id);
-        handleClose();
-      } catch (error) {
-        console.error("Error deleting schedule:", error);
-      }
     }
   };
 

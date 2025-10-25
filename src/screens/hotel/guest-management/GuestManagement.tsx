@@ -34,6 +34,8 @@ export function GuestManagement({
   searchValue: externalSearchValue,
 }: GuestManagementProps) {
   const [internalSearchValue, setInternalSearchValue] = useState("");
+  const [sortColumn, setSortColumn] = useState<string | undefined>(undefined);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   // Get hotel ID from context
   const { hotelId } = useHotelContext();
@@ -77,20 +79,58 @@ export function GuestManagement({
     }));
 
     // Apply search filter
-    if (!searchValue.trim()) {
-      return transformedData;
+    let filtered = transformedData;
+    if (searchValue.trim()) {
+      const searchLower = searchValue.toLowerCase();
+      filtered = transformedData.filter(
+        (guest) =>
+          guest.firstName.toLowerCase().includes(searchLower) ||
+          guest.lastName.toLowerCase().includes(searchLower) ||
+          guest.email.toLowerCase().includes(searchLower) ||
+          guest.room.toLowerCase().includes(searchLower) ||
+          guest.phone.toLowerCase().includes(searchLower)
+      );
     }
 
-    const searchLower = searchValue.toLowerCase();
-    return transformedData.filter(
-      (guest) =>
-        guest.firstName.toLowerCase().includes(searchLower) ||
-        guest.lastName.toLowerCase().includes(searchLower) ||
-        guest.email.toLowerCase().includes(searchLower) ||
-        guest.room.toLowerCase().includes(searchLower) ||
-        guest.phone.toLowerCase().includes(searchLower)
-    );
-  }, [guests, searchValue]);
+    // Apply sorting
+    if (sortColumn) {
+      filtered = [...filtered].sort((a, b) => {
+        const aValue = a[sortColumn];
+        const bValue = b[sortColumn];
+
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return 1;
+        if (bValue == null) return -1;
+
+        const aStr = String(aValue).toLowerCase();
+        const bStr = String(bValue).toLowerCase();
+
+        const aNum = parseFloat(aStr);
+        const bNum = parseFloat(bStr);
+
+        let comparison = 0;
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+          comparison = aNum - bNum;
+        } else {
+          comparison = aStr.localeCompare(bStr);
+        }
+
+        return sortDirection === "asc" ? comparison : -comparison;
+      });
+    }
+
+    return filtered;
+  }, [guests, searchValue, sortColumn, sortDirection]);
+
+  // Handle sort
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
+  };
 
   // Define table columns
   const columns: TableColumn<GuestTableData>[] = [
@@ -183,7 +223,7 @@ export function GuestManagement({
         buttonLabel="Add Guest"
         onButtonClick={() => {
           // TODO: Open add guest modal
-}}
+        }}
       />
 
       {/* Guest Management Table */}
@@ -206,6 +246,9 @@ export function GuestManagement({
           columns={columns}
           data={guestData}
           loading={isLoading}
+          sortColumn={sortColumn}
+          sortDirection={sortDirection}
+          onSort={handleSort}
           emptyMessage="No guests found. Guest information will appear here once check-ins begin."
         />
       </TableContainer>

@@ -11,6 +11,10 @@ import { StaffBasicSection } from "./StaffBasicSection";
 import { StaffEmploymentSection } from "./StaffEmploymentSection";
 import { StaffContactSection } from "./StaffContactSection";
 import { StaffAddressSection } from "./StaffAddressSection";
+import { StaffEmergencySection } from "./StaffEmergencySection";
+import { StaffAvatarSection } from "./StaffAvatarSection";
+import { StaffAvatarUploadSection } from "./StaffAvatarUploadSection";
+import { StaffGDPRSection } from "./StaffGDPRSection";
 import { createStaffMember, updateStaffMember } from "../services";
 import { useStaffForm } from "../hooks";
 import type { StaffModalProps, StaffData } from "./types";
@@ -61,6 +65,10 @@ export function StaffModal({
         country: formData.country || undefined,
         address: formData.address || undefined,
         dateOfBirth: formData.dateOfBirth || undefined,
+        avatarUrl: formData.avatarUrl || undefined,
+        emergencyContactName: formData.emergencyContactName || undefined,
+        emergencyContactNumber: formData.emergencyContactNumber || undefined,
+        gdprConsent: formData.gdprConsent,
         hotelId,
       });
     },
@@ -97,6 +105,10 @@ export function StaffModal({
         country: formData.country || undefined,
         address: formData.address || undefined,
         dateOfBirth: formData.dateOfBirth || undefined,
+        avatarUrl: formData.avatarUrl || undefined,
+        emergencyContactName: formData.emergencyContactName || undefined,
+        emergencyContactNumber: formData.emergencyContactNumber || undefined,
+        gdprConsent: formData.gdprConsent,
       });
     },
     onSuccess: () => {
@@ -155,7 +167,7 @@ export function StaffModal({
     }
   };
 
-  const handleFieldChange = (field: string, value: string) => {
+  const handleFieldChange = (field: string, value: string | boolean) => {
     setFormData({ ...formData, [field]: value });
   };
 
@@ -230,6 +242,25 @@ export function StaffModal({
       }
     >
       <form onSubmit={handleSubmit}>
+        {/* Avatar Section - Different components for view vs edit/create modes */}
+        {isViewMode ? (
+          // View mode: show read-only avatar if it exists
+          formData.avatarUrl && (
+            <StaffAvatarSection
+              avatarUrl={formData.avatarUrl}
+              fullName={`${formData.firstName} ${formData.lastName}`.trim()}
+            />
+          )
+        ) : (
+          // Create/Edit mode: show upload interface
+          <StaffAvatarUploadSection
+            avatarUrl={formData.avatarUrl}
+            fullName={`${formData.firstName} ${formData.lastName}`.trim()}
+            onAvatarChange={(url) => handleFieldChange("avatarUrl", url || "")}
+            disabled={isPending}
+          />
+        )}
+
         {/* Basic Information */}
         <StaffBasicSection
           mode={internalMode}
@@ -263,6 +294,24 @@ export function StaffModal({
           onFieldChange={handleFieldChange}
           disabled={isPending}
         />
+
+        {/* Emergency Contact */}
+        <StaffEmergencySection
+          mode={internalMode}
+          formData={formData}
+          onFieldChange={handleFieldChange}
+          disabled={isPending}
+        />
+
+        {/* GDPR Consent */}
+        {!isViewMode && (
+          <StaffGDPRSection
+            mode={internalMode}
+            gdprConsent={formData.gdprConsent}
+            onFieldChange={handleFieldChange}
+            disabled={isPending}
+          />
+        )}
       </form>
     </ModalForm>
   );

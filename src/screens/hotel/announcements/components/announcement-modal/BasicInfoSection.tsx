@@ -22,7 +22,7 @@ export function BasicInfoSection({
 
   return (
     <ModalFormSection title="Announcement Details">
-      <ModalFormGrid>
+      <ModalFormGrid columns={1}>
         <Input
           label="Title"
           value={formData.title}

@@ -25,6 +25,10 @@ interface RestaurantOrdersTableProps {
 export function RestaurantOrdersTable({
   searchValue,
 }: RestaurantOrdersTableProps) {
+  // Sorting state
+  const [sortColumn, setSortColumn] = useState<string | undefined>(undefined);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
   const hotelId = useHotelId();
   const [selectedOrder, setSelectedOrder] =
     useState<DineInOrderWithDetails | null>(null);
@@ -50,6 +54,16 @@ export function RestaurantOrdersTable({
   const handleCloseModal = () => {
     setIsDetailModalOpen(false);
     setSelectedOrder(null);
+  };
+
+  // Handler for sorting
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
   };
 
   // Define table columns for restaurant orders
@@ -97,43 +111,67 @@ export function RestaurantOrdersTable({
       return [];
     }
 
-    return dineInOrders
-      .filter((order: DineInOrderWithDetails) => {
-        if (!searchValue) return true;
+    const filtered = dineInOrders.filter((order: DineInOrderWithDetails) => {
+      if (!searchValue) return true;
 
-        const search = searchValue.toLowerCase();
-        const guestName = order.guests?.guest_name?.toLowerCase() || "";
-        const roomNumber = order.guests?.room_number?.toLowerCase() || "";
-        const restaurantName = order.restaurants?.name?.toLowerCase() || "";
+      const search = searchValue.toLowerCase();
+      const guestName = order.guests?.guest_name?.toLowerCase() || "";
+      const roomNumber = order.guests?.room_number?.toLowerCase() || "";
+      const restaurantName = order.restaurants?.name?.toLowerCase() || "";
 
-        return (
-          order.id.toLowerCase().includes(search) ||
-          order.status.toLowerCase().includes(search) ||
-          order.order_type.toLowerCase().includes(search) ||
-          guestName.includes(search) ||
-          roomNumber.includes(search) ||
-          restaurantName.includes(search)
-        );
-      })
-      .map((order: DineInOrderWithDetails) => {
-        // Count total items
-        const itemCount = order.dine_in_order_items?.length || 0;
-        const itemsText = itemCount === 1 ? "1 item" : `${itemCount} items`;
+      return (
+        order.id.toLowerCase().includes(search) ||
+        order.status.toLowerCase().includes(search) ||
+        order.order_type.toLowerCase().includes(search) ||
+        guestName.includes(search) ||
+        roomNumber.includes(search) ||
+        restaurantName.includes(search)
+      );
+    });
 
-        return {
-          id: order.id,
-          orderId: order.id.substring(0, 8).toUpperCase(),
-          type: order.order_type,
-          items: itemsText,
-          guest: order.guests?.guest_name || "Unknown Guest",
-          room: order.guests?.room_number || "N/A",
-          status: order.status,
-          created: order.created_at
-            ? new Date(order.created_at).toLocaleString()
-            : "N/A",
-        };
+    const transformed = filtered.map((order: DineInOrderWithDetails) => {
+      // Count total items
+      const itemCount = order.dine_in_order_items?.length || 0;
+      const itemsText = itemCount === 1 ? "1 item" : `${itemCount} items`;
+
+      return {
+        id: order.id,
+        orderId: order.id.substring(0, 8).toUpperCase(),
+        type: order.order_type,
+        items: itemsText,
+        guest: order.guests?.guest_name || "Unknown Guest",
+        room: order.guests?.room_number || "N/A",
+        status: order.status,
+        created: order.created_at
+          ? new Date(order.created_at).toLocaleString()
+          : "N/A",
+      };
+    });
+
+    // Apply sorting
+    if (sortColumn) {
+      return [...transformed].sort((a, b) => {
+        const aValue = (a as Record<string, unknown>)[sortColumn];
+        const bValue = (b as Record<string, unknown>)[sortColumn];
+
+        if (aValue === null || aValue === undefined) return 1;
+        if (bValue === null || bValue === undefined) return -1;
+
+        let comparison = 0;
+        if (typeof aValue === "number" && typeof bValue === "number") {
+          comparison = aValue - bValue;
+        } else {
+          const aStr = String(aValue).toLowerCase();
+          const bStr = String(bValue).toLowerCase();
+          comparison = aStr.localeCompare(bStr);
+        }
+
+        return sortDirection === "asc" ? comparison : -comparison;
       });
-  }, [dineInOrders, searchValue]);
+    }
+
+    return transformed;
+  }, [dineInOrders, searchValue, sortColumn, sortDirection]);
 
   if (error) {
     return (
@@ -162,6 +200,9 @@ export function RestaurantOrdersTable({
           emptyMessage="No restaurant orders found. Orders will appear here once guests place orders."
           onRowClick={handleRowClick}
           itemsPerPage={10}
+          sortColumn={sortColumn}
+          sortDirection={sortDirection}
+          onSort={handleSort}
         />
       </div>
 

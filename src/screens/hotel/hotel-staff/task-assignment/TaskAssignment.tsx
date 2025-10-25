@@ -59,6 +59,7 @@ export function TaskAssignment({ searchValue }: TaskAssignmentProps) {
   };
 
   const handleDelete = () => {
+    setIsDetailModalOpen(false);
     setIsDeleteConfirmOpen(true);
   };
 

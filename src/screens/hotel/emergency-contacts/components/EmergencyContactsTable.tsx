@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Table,
   type TableColumn,
@@ -33,6 +33,8 @@ export function EmergencyContactsTable({
   onView,
 }: EmergencyContactsTableProps) {
   const hotelId = useHotelId();
+  const [sortColumn, setSortColumn] = useState<string | undefined>(undefined);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   // Fetch emergency contacts using the hook
   const {
@@ -93,7 +95,7 @@ export function EmergencyContactsTable({
       return [];
     }
 
-    return emergencyContacts
+    let filtered = emergencyContacts
       .filter((contact: EmergencyContactRow) => {
         if (!searchValue) return true;
 
@@ -113,7 +115,36 @@ export function EmergencyContactsTable({
           ? new Date(contact.created_at).toLocaleDateString()
           : "N/A",
       }));
-  }, [emergencyContacts, searchValue]);
+
+    // Apply sorting
+    if (sortColumn) {
+      filtered = [...filtered].sort((a, b) => {
+        const aValue = (a as Record<string, unknown>)[sortColumn];
+        const bValue = (b as Record<string, unknown>)[sortColumn];
+
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return 1;
+        if (bValue == null) return -1;
+
+        const aStr = String(aValue).toLowerCase();
+        const bStr = String(bValue).toLowerCase();
+
+        const comparison = aStr.localeCompare(bStr);
+        return sortDirection === "asc" ? comparison : -comparison;
+      });
+    }
+
+    return filtered;
+  }, [emergencyContacts, searchValue, sortColumn, sortDirection]);
+
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
+  };
 
   if (error) {
     return (
@@ -139,6 +170,9 @@ export function EmergencyContactsTable({
           columns={columns}
           data={contactData}
           loading={isLoading}
+          sortColumn={sortColumn}
+          sortDirection={sortDirection}
+          onSort={handleSort}
           emptyMessage={
             searchValue
               ? `No emergency contacts found matching "${searchValue}".`

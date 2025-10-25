@@ -35,6 +35,10 @@ export function RestaurantsTable({
   searchValue,
   onView,
 }: RestaurantsTableProps) {
+  // Sorting state
+  const [sortColumn, setSortColumn] = useState<string | undefined>(undefined);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
   const hotelId = useHotelId();
 
   // Fetch restaurants using the hook
@@ -75,6 +79,16 @@ export function RestaurantsTable({
       setRestaurantToDelete(null);
     } catch {
       // Error is handled by the mutation
+    }
+  };
+
+  // Handler for sorting
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
     }
   };
 
@@ -119,27 +133,51 @@ export function RestaurantsTable({
       return [];
     }
 
-    return restaurants
-      .filter((restaurant: RestaurantRow) => {
-        if (!searchValue) return true;
+    const filtered = restaurants.filter((restaurant: RestaurantRow) => {
+      if (!searchValue) return true;
 
-        const search = searchValue.toLowerCase();
-        return (
-          restaurant.name.toLowerCase().includes(search) ||
-          restaurant.cuisine.toLowerCase().includes(search) ||
-          (restaurant.description &&
-            restaurant.description.toLowerCase().includes(search))
-        );
-      })
-      .map((restaurant: RestaurantRow) => ({
-        id: restaurant.id,
-        restaurantStatus: restaurant.is_active ? "Active" : "Inactive",
-        isActive: restaurant.is_active,
-        name: restaurant.name,
-        cuisine: restaurant.cuisine,
-        description: restaurant.description || "N/A",
-      }));
-  }, [restaurants, searchValue]);
+      const search = searchValue.toLowerCase();
+      return (
+        restaurant.name.toLowerCase().includes(search) ||
+        restaurant.cuisine.toLowerCase().includes(search) ||
+        (restaurant.description &&
+          restaurant.description.toLowerCase().includes(search))
+      );
+    });
+
+    const transformed = filtered.map((restaurant: RestaurantRow) => ({
+      id: restaurant.id,
+      restaurantStatus: restaurant.is_active ? "Active" : "Inactive",
+      isActive: restaurant.is_active,
+      name: restaurant.name,
+      cuisine: restaurant.cuisine,
+      description: restaurant.description || "N/A",
+    }));
+
+    // Apply sorting
+    if (sortColumn) {
+      return [...transformed].sort((a, b) => {
+        const aValue = (a as Record<string, unknown>)[sortColumn];
+        const bValue = (b as Record<string, unknown>)[sortColumn];
+
+        if (aValue === null || aValue === undefined) return 1;
+        if (bValue === null || bValue === undefined) return -1;
+
+        let comparison = 0;
+        if (typeof aValue === "number" && typeof bValue === "number") {
+          comparison = aValue - bValue;
+        } else {
+          const aStr = String(aValue).toLowerCase();
+          const bStr = String(bValue).toLowerCase();
+          comparison = aStr.localeCompare(bStr);
+        }
+
+        return sortDirection === "asc" ? comparison : -comparison;
+      });
+    }
+
+    return transformed;
+  }, [restaurants, searchValue, sortColumn, sortDirection]);
 
   if (error) {
     return (
@@ -173,6 +211,9 @@ export function RestaurantsTable({
           }
           itemsPerPage={10}
           onRowClick={handleRowClick}
+          sortColumn={sortColumn}
+          sortDirection={sortDirection}
+          onSort={handleSort}
         />
       </div>
 

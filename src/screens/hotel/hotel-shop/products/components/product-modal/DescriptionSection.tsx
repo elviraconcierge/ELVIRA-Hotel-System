@@ -22,7 +22,7 @@ export function DescriptionSection({
 
   return (
     <ModalFormSection title="Description">
-      <ModalFormGrid>
+      <ModalFormGrid columns={1}>
         <Textarea
           label="Product Description"
           value={formData.description}

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Table,
   type TableColumn,
@@ -33,6 +33,10 @@ interface MenuItemsTableProps {
 }
 
 export function MenuItemsTable({ searchValue, onView }: MenuItemsTableProps) {
+  // Sorting state
+  const [sortColumn, setSortColumn] = useState<string | undefined>(undefined);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
   const hotelId = useHotelId();
 
   // Fetch menu items using the hook
@@ -59,6 +63,16 @@ export function MenuItemsTable({ searchValue, onView }: MenuItemsTableProps) {
     const fullMenuItem = menuItems?.find((item) => item.id === row.id);
     if (fullMenuItem) {
       onView(fullMenuItem);
+    }
+  };
+
+  // Handler for sorting
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
     }
   };
 
@@ -155,44 +169,73 @@ export function MenuItemsTable({ searchValue, onView }: MenuItemsTableProps) {
       return [];
     }
 
-    return menuItems
-      .filter((item: MenuItemRow) => {
-        if (!searchValue) return true;
+    const filtered = menuItems.filter((item: MenuItemRow) => {
+      if (!searchValue) return true;
 
-        const search = searchValue.toLowerCase();
-        return (
-          item.name.toLowerCase().includes(search) ||
-          item.category.toLowerCase().includes(search) ||
-          item.description?.toLowerCase().includes(search) ||
-          false
-        );
-      })
-      .map((item: MenuItemRow) => {
-        // Map restaurant IDs to names
-        let restaurantDisplay = "All restaurants";
-        if (item.restaurant_ids && item.restaurant_ids.length > 0) {
-          const restaurantNames = item.restaurant_ids
-            .map((id) => restaurantMap.get(id))
-            .filter((name): name is string => name !== undefined);
+      const search = searchValue.toLowerCase();
+      return (
+        item.name.toLowerCase().includes(search) ||
+        item.category.toLowerCase().includes(search) ||
+        item.description?.toLowerCase().includes(search) ||
+        false
+      );
+    });
 
-          if (restaurantNames.length > 0) {
-            restaurantDisplay = restaurantNames.join(", ");
-          }
+    const transformed = filtered.map((item: MenuItemRow) => {
+      // Map restaurant IDs to names
+      let restaurantDisplay = "All restaurants";
+      if (item.restaurant_ids && item.restaurant_ids.length > 0) {
+        const restaurantNames = item.restaurant_ids
+          .map((id) => restaurantMap.get(id))
+          .filter((name): name is string => name !== undefined);
+
+        if (restaurantNames.length > 0) {
+          restaurantDisplay = restaurantNames.join(", ");
+        }
+      }
+
+      return {
+        id: item.id,
+        status: item.is_active ? "Active" : "Inactive",
+        isActive: item.is_active,
+        imageUrl: item.image_url,
+        item: item.name,
+        category: item.category,
+        restaurant: restaurantDisplay,
+        price: `$${item.price.toFixed(2)}`,
+        hotelRecommended: item.hotel_recommended,
+      };
+    });
+
+    // Apply sorting
+    if (sortColumn) {
+      return [...transformed].sort((a, b) => {
+        const aValue = (a as Record<string, unknown>)[sortColumn];
+        const bValue = (b as Record<string, unknown>)[sortColumn];
+
+        if (aValue === null || aValue === undefined) return 1;
+        if (bValue === null || bValue === undefined) return -1;
+
+        let comparison = 0;
+        // Special handling for price column
+        if (sortColumn === "price") {
+          const aNum = parseFloat(String(aValue).replace(/[$,]/g, ""));
+          const bNum = parseFloat(String(bValue).replace(/[$,]/g, ""));
+          comparison = aNum - bNum;
+        } else if (typeof aValue === "number" && typeof bValue === "number") {
+          comparison = aValue - bValue;
+        } else {
+          const aStr = String(aValue).toLowerCase();
+          const bStr = String(bValue).toLowerCase();
+          comparison = aStr.localeCompare(bStr);
         }
 
-        return {
-          id: item.id,
-          status: item.is_active ? "Active" : "Inactive",
-          isActive: item.is_active,
-          imageUrl: item.image_url,
-          item: item.name,
-          category: item.category,
-          restaurant: restaurantDisplay,
-          price: `$${item.price.toFixed(2)}`,
-          hotelRecommended: item.hotel_recommended,
-        };
+        return sortDirection === "asc" ? comparison : -comparison;
       });
-  }, [menuItems, searchValue, restaurantMap]);
+    }
+
+    return transformed;
+  }, [menuItems, searchValue, restaurantMap, sortColumn, sortDirection]);
 
   if (error) {
     return (
@@ -221,6 +264,9 @@ export function MenuItemsTable({ searchValue, onView }: MenuItemsTableProps) {
           emptyMessage="No menu items found. Add new menu items to get started."
           onRowClick={handleRowClick}
           itemsPerPage={10}
+          sortColumn={sortColumn}
+          sortDirection={sortDirection}
+          onSort={handleSort}
         />
       </div>
     </div>

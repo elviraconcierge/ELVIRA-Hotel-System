@@ -1,5 +1,11 @@
-import { useMemo } from "react";
-import { Table, type TableColumn, LoadingState, ErrorState } from "../index";
+import { useMemo, useState } from "react";
+import {
+  Table,
+  type TableColumn,
+  LoadingState,
+  ErrorState,
+  Pagination,
+} from "../index";
 import { usePagination } from "../../../hooks";
 
 interface DataTableProps<
@@ -66,6 +72,10 @@ export function DataTable<
   itemsPerPage = 10,
   onRowClick,
 }: DataTableProps<TData, TRawData>) {
+  // Sorting state
+  const [sortColumn, setSortColumn] = useState<string | undefined>(undefined);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
   // Transform and filter data
   const processedData = useMemo(() => {
     if (!data) return [];
@@ -90,12 +100,58 @@ export function DataTable<
     return processed;
   }, [data, searchValue, searchFields, transformData]);
 
+  // Apply sorting
+  const sortedData = useMemo(() => {
+    if (!sortColumn) return processedData;
+
+    return [...processedData].sort((a, b) => {
+      const aValue = a[sortColumn];
+      const bValue = b[sortColumn];
+
+      // Handle null/undefined values
+      if (aValue == null && bValue == null) return 0;
+      if (aValue == null) return 1;
+      if (bValue == null) return -1;
+
+      // Convert to strings for comparison
+      const aStr = String(aValue).toLowerCase();
+      const bStr = String(bValue).toLowerCase();
+
+      // Try to parse as numbers if possible
+      const aNum = parseFloat(aStr);
+      const bNum = parseFloat(bStr);
+
+      let comparison = 0;
+      if (!isNaN(aNum) && !isNaN(bNum)) {
+        // Numeric comparison
+        comparison = aNum - bNum;
+      } else {
+        // String comparison
+        comparison = aStr.localeCompare(bStr);
+      }
+
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+  }, [processedData, sortColumn, sortDirection]);
+
+  // Handle sort
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      // Toggle direction if same column
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      // New column, default to ascending
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
+  };
+
   // Apply pagination if enabled
   const pagination = usePagination<TData>({
-    data: processedData,
+    data: sortedData,
     itemsPerPage,
   });
-  const displayData = showPagination ? pagination.paginatedData : processedData;
+  const displayData = showPagination ? pagination.paginatedData : sortedData;
 
   // Loading state
   if (isLoading) {
@@ -139,20 +195,32 @@ export function DataTable<
             ? `No results found matching "${searchValue}"`
             : emptyMessage
         }
-        showPagination={showPagination}
-        currentPage={pagination.currentPage}
-        totalPages={pagination.totalPages}
-        totalItems={processedData.length}
-        itemsPerPage={pagination.itemsPerPage}
-        onPageChange={pagination.setCurrentPage}
+        sortColumn={sortColumn}
+        sortDirection={sortDirection}
+        onSort={handleSort}
+        disablePagination={true}
         onRowClick={onRowClick}
       />
 
+      {/* Manual Pagination */}
+      {showPagination && sortedData.length > 0 && (
+        <div className="bg-white rounded-b-3xl border-t border-gray-200">
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            onPageChange={pagination.setCurrentPage}
+            totalItems={sortedData.length}
+            itemsPerPage={pagination.itemsPerPage}
+            onItemsPerPageChange={pagination.setItemsPerPage}
+          />
+        </div>
+      )}
+
       {/* Summary */}
-      {showSummary && !searchValue && processedData.length > 0 && (
+      {showSummary && !searchValue && sortedData.length > 0 && (
         <div className="mt-4 text-sm text-gray-500">
-          {summaryLabel}: {processedData.length} item
-          {processedData.length !== 1 ? "s" : ""}
+          {summaryLabel}: {sortedData.length} item
+          {sortedData.length !== 1 ? "s" : ""}
         </div>
       )}
     </div>

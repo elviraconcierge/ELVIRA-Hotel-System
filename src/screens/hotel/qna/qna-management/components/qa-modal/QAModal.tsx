@@ -37,6 +37,7 @@ export function QAModal({
   onDelete,
 }: QAModalProps) {
   const [formData, setFormData] = useState<QAFormData>(initialFormData);
+  const [isPending, setIsPending] = useState(false);
 
   useEffect(() => {
     if (qaItem && (mode === "edit" || mode === "view")) {
@@ -56,12 +57,22 @@ export function QAModal({
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+    if (mode === "view") return;
+
     if (!formData.question.trim() || !formData.answer.trim()) {
       return;
     }
-    onSubmit(formData);
+
+    setIsPending(true);
+    try {
+      await onSubmit(formData);
+      onClose();
+    } catch (error) {
+      console.error("Form submission error:", error);
+    } finally {
+      setIsPending(false);
+    }
   };
 
   const getTitle = () => {
@@ -75,13 +86,27 @@ export function QAModal({
     }
   };
 
+  const getSubmitLabel = () => {
+    return mode === "edit" ? "Save Changes" : "Add Q&A";
+  };
+
   return (
     <ModalForm
       isOpen={isOpen}
       onClose={onClose}
       title={getTitle()}
-      size="2xl"
-      onSubmit={handleSubmit}
+      size="md"
+      footer={
+        <ModalFormActions
+          mode={mode}
+          onCancel={onClose}
+          onSubmit={handleSubmit}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          submitLabel={getSubmitLabel()}
+          isPending={isPending}
+        />
+      }
     >
       <QuestionSection
         formData={formData}
@@ -93,15 +118,6 @@ export function QAModal({
         formData={formData}
         onChange={handleChange}
         mode={mode}
-      />
-
-      <ModalFormActions
-        mode={mode}
-        onCancel={onClose}
-        onEdit={onEdit}
-        onDelete={onDelete}
-        submitLabel={mode === "create" ? "Add Q&A" : "Save Changes"}
-        isPending={false}
       />
     </ModalForm>
   );

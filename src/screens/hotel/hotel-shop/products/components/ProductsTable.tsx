@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Table,
   type TableColumn,
@@ -32,6 +32,10 @@ interface ProductsTableProps {
 }
 
 export function ProductsTable({ searchValue, onView }: ProductsTableProps) {
+  // Sorting state
+  const [sortColumn, setSortColumn] = useState<string | undefined>(undefined);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
   const hotelId = useHotelId();
 
   // Fetch products using the hook
@@ -49,6 +53,16 @@ export function ProductsTable({ searchValue, onView }: ProductsTableProps) {
     const fullProduct = products?.find((item) => item.id === row.id);
     if (fullProduct) {
       onView(fullProduct);
+    }
+  };
+
+  // Handler for sorting
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
     }
   };
 
@@ -145,32 +159,61 @@ export function ProductsTable({ searchValue, onView }: ProductsTableProps) {
       return [];
     }
 
-    return products
-      .filter((product: ProductRow) => {
-        if (!searchValue) return true;
+    const filtered = products.filter((product: ProductRow) => {
+      if (!searchValue) return true;
 
-        const search = searchValue.toLowerCase();
-        return (
-          product.name.toLowerCase().includes(search) ||
-          product.category.toLowerCase().includes(search) ||
-          (product.description &&
-            product.description.toLowerCase().includes(search))
-        );
-      })
-      .map((product: ProductRow) => ({
-        id: product.id,
-        status: product.is_active ? "Active" : "Inactive",
-        isActive: product.is_active,
-        imageUrl: product.image_url,
-        product: product.name,
-        category: product.category,
-        price: `$${product.price.toFixed(2)}`,
-        stock: product.is_unlimited_stock
-          ? "Unlimited"
-          : product.stock_quantity?.toString() || "0",
-        hotelRecommended: product.recommended,
-      }));
-  }, [products, searchValue]);
+      const search = searchValue.toLowerCase();
+      return (
+        product.name.toLowerCase().includes(search) ||
+        product.category.toLowerCase().includes(search) ||
+        (product.description &&
+          product.description.toLowerCase().includes(search))
+      );
+    });
+
+    const transformed = filtered.map((product: ProductRow) => ({
+      id: product.id,
+      status: product.is_active ? "Active" : "Inactive",
+      isActive: product.is_active,
+      imageUrl: product.image_url,
+      product: product.name,
+      category: product.category,
+      price: `$${product.price.toFixed(2)}`,
+      stock: product.is_unlimited_stock
+        ? "Unlimited"
+        : product.stock_quantity?.toString() || "0",
+      hotelRecommended: product.recommended,
+    }));
+
+    // Apply sorting
+    if (sortColumn) {
+      return [...transformed].sort((a, b) => {
+        const aValue = (a as Record<string, unknown>)[sortColumn];
+        const bValue = (b as Record<string, unknown>)[sortColumn];
+
+        if (aValue === null || aValue === undefined) return 1;
+        if (bValue === null || bValue === undefined) return -1;
+
+        let comparison = 0;
+        // Special handling for price column
+        if (sortColumn === "price") {
+          const aNum = parseFloat(String(aValue).replace(/[$,]/g, ""));
+          const bNum = parseFloat(String(bValue).replace(/[$,]/g, ""));
+          comparison = aNum - bNum;
+        } else if (typeof aValue === "number" && typeof bValue === "number") {
+          comparison = aValue - bValue;
+        } else {
+          const aStr = String(aValue).toLowerCase();
+          const bStr = String(bValue).toLowerCase();
+          comparison = aStr.localeCompare(bStr);
+        }
+
+        return sortDirection === "asc" ? comparison : -comparison;
+      });
+    }
+
+    return transformed;
+  }, [products, searchValue, sortColumn, sortDirection]);
 
   if (error) {
     return (
@@ -203,6 +246,9 @@ export function ProductsTable({ searchValue, onView }: ProductsTableProps) {
           }
           onRowClick={handleRowClick}
           itemsPerPage={10}
+          sortColumn={sortColumn}
+          sortDirection={sortDirection}
+          onSort={handleSort}
         />
       </div>
     </div>

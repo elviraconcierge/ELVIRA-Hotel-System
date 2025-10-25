@@ -84,7 +84,8 @@ export function QnAManagement({ searchValue }: QnAManagementProps) {
 
   const handleDelete = () => {
     if (selectedQA) {
-      setQaToDelete(selectedQA);
+      setQAToDelete(selectedQA);
+      setIsModalOpen(false);
       setIsDeleteConfirmOpen(true);
     }
   };
@@ -98,7 +99,7 @@ export function QnAManagement({ searchValue }: QnAManagementProps) {
         hotelId,
       });
       setIsDeleteConfirmOpen(false);
-      setQaToDelete(null);
+      setQAToDelete(null);
       handleCloseModal();
     } catch (error) {
       console.error("Error deleting Q&A:", error);
@@ -143,7 +144,7 @@ export function QnAManagement({ searchValue }: QnAManagementProps) {
         qaItem={selectedQA}
         onSubmit={handleSubmit}
         onEdit={modalMode === "view" ? handleEditFromView : undefined}
-        onDelete={modalMode === "view" ? handleDelete : undefined}
+        onDelete={modalMode === "view" ? () => handleDelete() : undefined}
       />
 
       <ConfirmationModal

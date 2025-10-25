@@ -30,7 +30,9 @@ export function ModalForm({
       size={size}
       footer={
         footer ? (
-          <div className="flex justify-end gap-3">{footer}</div>
+          <div className="flex justify-between items-center gap-3">
+            {footer}
+          </div>
         ) : undefined
       }
     >

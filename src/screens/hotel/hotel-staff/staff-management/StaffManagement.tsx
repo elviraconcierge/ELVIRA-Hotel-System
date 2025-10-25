@@ -62,6 +62,7 @@ export function StaffManagement({ searchValue }: StaffManagementProps) {
   };
 
   const handleDelete = () => {
+    setIsDetailModalOpen(false);
     setIsDeleteConfirmOpen(true);
   };
 

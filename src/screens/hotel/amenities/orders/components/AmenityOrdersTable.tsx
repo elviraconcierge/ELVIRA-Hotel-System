@@ -22,6 +22,10 @@ interface AmenityOrdersTableProps {
 }
 
 export function AmenityOrdersTable({ searchValue }: AmenityOrdersTableProps) {
+  // Sorting state
+  const [sortColumn, setSortColumn] = useState<string | undefined>(undefined);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
   const hotelId = useHotelId();
   const [selectedRequest, setSelectedRequest] =
     useState<AmenityRequestWithDetails | null>(null);
@@ -49,6 +53,16 @@ export function AmenityOrdersTable({ searchValue }: AmenityOrdersTableProps) {
   const handleCloseModal = () => {
     setIsDetailModalOpen(false);
     setSelectedRequest(null);
+  };
+
+  // Handler for sorting
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
   };
 
   // Define table columns for amenity orders
@@ -91,8 +105,8 @@ export function AmenityOrdersTable({ searchValue }: AmenityOrdersTableProps) {
       return [];
     }
 
-    return amenityRequests
-      .filter((request: AmenityRequestWithDetails) => {
+    const filtered = amenityRequests.filter(
+      (request: AmenityRequestWithDetails) => {
         if (!searchValue) return true;
 
         const search = searchValue.toLowerCase();
@@ -103,19 +117,45 @@ export function AmenityOrdersTable({ searchValue }: AmenityOrdersTableProps) {
           request.guests?.guest_name.toLowerCase().includes(search) ||
           request.guests?.room_number.toLowerCase().includes(search)
         );
-      })
-      .map((request: AmenityRequestWithDetails) => ({
-        id: request.id,
-        requestId: request.id.substring(0, 8).toUpperCase(),
-        amenity: request.amenities?.name || "Unknown Amenity",
-        guest: request.guests?.guest_name || "Unknown Guest",
-        room: request.guests?.room_number || "N/A",
-        status: request.status,
-        created: request.created_at
-          ? new Date(request.created_at).toLocaleString()
-          : "N/A",
-      }));
-  }, [amenityRequests, searchValue]);
+      }
+    );
+
+    const transformed = filtered.map((request: AmenityRequestWithDetails) => ({
+      id: request.id,
+      requestId: request.id.substring(0, 8).toUpperCase(),
+      amenity: request.amenities?.name || "Unknown Amenity",
+      guest: request.guests?.guest_name || "Unknown Guest",
+      room: request.guests?.room_number || "N/A",
+      status: request.status,
+      created: request.created_at
+        ? new Date(request.created_at).toLocaleString()
+        : "N/A",
+    }));
+
+    // Apply sorting
+    if (sortColumn) {
+      return [...transformed].sort((a, b) => {
+        const aValue = (a as Record<string, unknown>)[sortColumn];
+        const bValue = (b as Record<string, unknown>)[sortColumn];
+
+        if (aValue === null || aValue === undefined) return 1;
+        if (bValue === null || bValue === undefined) return -1;
+
+        let comparison = 0;
+        if (typeof aValue === "number" && typeof bValue === "number") {
+          comparison = aValue - bValue;
+        } else {
+          const aStr = String(aValue).toLowerCase();
+          const bStr = String(bValue).toLowerCase();
+          comparison = aStr.localeCompare(bStr);
+        }
+
+        return sortDirection === "asc" ? comparison : -comparison;
+      });
+    }
+
+    return transformed;
+  }, [amenityRequests, searchValue, sortColumn, sortDirection]);
 
   if (error) {
     return (
@@ -144,6 +184,9 @@ export function AmenityOrdersTable({ searchValue }: AmenityOrdersTableProps) {
           emptyMessage="No amenity orders found. Orders will appear here once guests start requesting amenities."
           onRowClick={handleRowClick}
           itemsPerPage={10}
+          sortColumn={sortColumn}
+          sortDirection={sortDirection}
+          onSort={handleSort}
         />
       </div>
 

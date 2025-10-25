@@ -18,6 +18,7 @@ interface TableProps<T = Record<string, unknown>> {
   // Pagination props
   itemsPerPage?: number;
   disablePagination?: boolean;
+  enableItemsPerPageSelector?: boolean;
 }
 
 export function Table<T extends Record<string, unknown>>({
@@ -33,21 +34,26 @@ export function Table<T extends Record<string, unknown>>({
   className = "",
   itemsPerPage = 10,
   disablePagination = false,
+  enableItemsPerPageSelector = true,
 }: TableProps<T>) {
   const [currentPage, setCurrentPage] = useState(1);
+  const [currentItemsPerPage, setCurrentItemsPerPage] = useState(itemsPerPage);
 
   // Calculate pagination
   const totalItems = data.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const showPagination = !disablePagination && totalItems > itemsPerPage;
+  const totalPages = Math.ceil(totalItems / currentItemsPerPage);
+  const showPagination =
+    !disablePagination &&
+    (totalItems > currentItemsPerPage ||
+      (enableItemsPerPageSelector && totalItems > 10));
 
   // Get current page data
   const paginatedData = useMemo(() => {
     if (disablePagination) return data;
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
+    const startIndex = (currentPage - 1) * currentItemsPerPage;
+    const endIndex = startIndex + currentItemsPerPage;
     return data.slice(startIndex, endIndex);
-  }, [data, currentPage, itemsPerPage, disablePagination]);
+  }, [data, currentPage, currentItemsPerPage, disablePagination]);
 
   // Reset to page 1 when data changes
   useMemo(() => {
@@ -58,6 +64,11 @@ export function Table<T extends Record<string, unknown>>({
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setCurrentItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // Reset to first page when changing items per page
   };
 
   if (loading) {
@@ -106,7 +117,10 @@ export function Table<T extends Record<string, unknown>>({
           totalPages={totalPages}
           onPageChange={handlePageChange}
           totalItems={totalItems}
-          itemsPerPage={itemsPerPage}
+          itemsPerPage={currentItemsPerPage}
+          onItemsPerPageChange={
+            enableItemsPerPageSelector ? handleItemsPerPageChange : undefined
+          }
         />
       )}
     </div>

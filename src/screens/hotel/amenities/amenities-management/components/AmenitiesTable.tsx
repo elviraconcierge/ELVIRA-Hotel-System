@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Table,
   type TableColumn,
@@ -12,7 +12,6 @@ import {
   useDeleteAmenity,
 } from "../../../../../hooks/amenities/amenities/useAmenities";
 import { useHotelId } from "../../../../../hooks/useHotelContext";
-import { usePagination } from "../../../../../hooks";
 import { AmenityModal } from "./amenity-modal";
 import { useItemTableModals } from "../../../../../components/shared/tables/useItemTableModals";
 import type { Database } from "../../../../../types/database";
@@ -28,6 +27,7 @@ interface Amenity extends Record<string, unknown> {
   category: string;
   price: string;
   hotelRecommended: boolean | null;
+  [key: string]: unknown;
 }
 
 interface AmenitiesTableProps {
@@ -36,6 +36,8 @@ interface AmenitiesTableProps {
 
 export function AmenitiesTable({ searchValue }: AmenitiesTableProps) {
   const hotelId = useHotelId();
+  const [sortColumn, setSortColumn] = useState<string | undefined>(undefined);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   // Use shared modal state management hook
   const {
@@ -179,7 +181,7 @@ export function AmenitiesTable({ searchValue }: AmenitiesTableProps) {
       return [];
     }
 
-    return amenities
+    let filtered = amenities
       .filter((amenity: AmenityRow) => {
         if (!searchValue) return true;
 
@@ -201,16 +203,46 @@ export function AmenitiesTable({ searchValue }: AmenitiesTableProps) {
         price: `$${amenity.price.toFixed(2)}`,
         hotelRecommended: amenity.recommended,
       }));
-  }, [amenities, searchValue]);
 
-  // Pagination
-  const {
-    currentPage,
-    totalPages,
-    paginatedData,
-    itemsPerPage,
-    setCurrentPage,
-  } = usePagination<Amenity>({ data: amenityData, itemsPerPage: 10 });
+    // Apply sorting
+    if (sortColumn) {
+      filtered = [...filtered].sort((a, b) => {
+        const aValue = (a as Record<string, unknown>)[sortColumn];
+        const bValue = (b as Record<string, unknown>)[sortColumn];
+
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return 1;
+        if (bValue == null) return -1;
+
+        const aStr = String(aValue).toLowerCase();
+        const bStr = String(bValue).toLowerCase();
+
+        const aNum = parseFloat(aStr.replace(/[$,]/g, ""));
+        const bNum = parseFloat(bStr.replace(/[$,]/g, ""));
+
+        let comparison = 0;
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+          comparison = aNum - bNum;
+        } else {
+          comparison = aStr.localeCompare(bStr);
+        }
+
+        return sortDirection === "asc" ? comparison : -comparison;
+      });
+    }
+
+    return filtered;
+  }, [amenities, searchValue, sortColumn, sortDirection]);
+
+  // Handle sort
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
+  };
 
   if (error) {
     return (
@@ -234,20 +266,18 @@ export function AmenitiesTable({ searchValue }: AmenitiesTableProps) {
       <div className="bg-white rounded-lg border border-gray-200">
         <Table
           columns={amenityColumns}
-          data={paginatedData}
+          data={amenityData}
           loading={isLoading}
+          sortColumn={sortColumn}
+          sortDirection={sortDirection}
+          onSort={handleSort}
           emptyMessage={
             searchValue
               ? `No amenities found matching "${searchValue}".`
               : "No amenities found. Add new amenities to get started."
           }
           onRowClick={handleRowClick}
-          showPagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={amenityData.length}
-          itemsPerPage={itemsPerPage}
-          onPageChange={setCurrentPage}
+          itemsPerPage={10}
         />
       </div>
 

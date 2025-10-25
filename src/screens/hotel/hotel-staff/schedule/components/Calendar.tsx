@@ -2,10 +2,12 @@ import { useState } from "react";
 import { CalendarHeader } from "./header";
 import { CalendarGrid } from "./CalendarGrid";
 import { ScheduleModal, SchedulesListModal } from "./modals";
+import { ConfirmationModal } from "../../../../../components/ui";
 import type { CalendarView } from "./types";
 import type { StaffScheduleWithDetails } from "../../../../../types/staff-schedules";
 import { useHotelContext } from "../../../../../hooks/useHotelContext";
 import { useSchedulesByDateRange } from "../../../../../hooks/staff-schedules";
+import { useDeleteStaffSchedule } from "../../../../../hooks/staff-schedules";
 
 export type { CalendarView };
 
@@ -28,6 +30,11 @@ export function Calendar({ searchValue }: CalendarProps) {
   const [daySchedules, setDaySchedules] = useState<StaffScheduleWithDetails[]>(
     []
   );
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [scheduleToDelete, setScheduleToDelete] =
+    useState<StaffScheduleWithDetails | null>(null);
+
+  const deleteSchedule = useDeleteStaffSchedule();
 
   // Calculate date range based on view
   const getDateRange = () => {
@@ -148,6 +155,26 @@ export function Calendar({ searchValue }: CalendarProps) {
     setSelectedSchedule(null);
   };
 
+  const handleDelete = () => {
+    if (selectedSchedule) {
+      setScheduleToDelete(selectedSchedule);
+      setIsModalOpen(false);
+      setIsDeleteConfirmOpen(true);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!scheduleToDelete) return;
+
+    try {
+      await deleteSchedule.mutateAsync(scheduleToDelete.id);
+      setIsDeleteConfirmOpen(false);
+      setScheduleToDelete(null);
+    } catch (error) {
+      console.error("Error deleting schedule:", error);
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg border border-gray-200">
       <CalendarHeader
@@ -189,6 +216,16 @@ export function Calendar({ searchValue }: CalendarProps) {
         schedule={selectedSchedule}
         mode={isCreateMode ? "create" : "view"}
         prefilledDate={prefilledDate}
+        onDelete={!isCreateMode && selectedSchedule ? handleDelete : undefined}
+      />
+      <ConfirmationModal
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={confirmDelete}
+        title="Delete Schedule"
+        message={`Are you sure you want to delete this schedule? This action cannot be undone.`}
+        confirmText="Delete"
+        variant="danger"
       />
     </div>
   );

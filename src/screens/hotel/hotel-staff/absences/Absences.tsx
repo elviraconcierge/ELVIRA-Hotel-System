@@ -35,6 +35,7 @@ export function Absences({ searchValue }: AbsencesProps) {
   };
 
   const handleDelete = () => {
+    setIsModalOpen(false);
     setIsDeleteConfirmOpen(true);
   };
 
