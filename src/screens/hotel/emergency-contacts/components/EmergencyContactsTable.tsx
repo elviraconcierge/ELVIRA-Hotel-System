@@ -165,23 +165,21 @@ export function EmergencyContactsTable({
       )}
 
       {/* Emergency Contacts Table */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <Table
-          columns={columns}
-          data={contactData}
-          loading={isLoading}
-          sortColumn={sortColumn}
-          sortDirection={sortDirection}
-          onSort={handleSort}
-          emptyMessage={
-            searchValue
-              ? `No emergency contacts found matching "${searchValue}".`
-              : "No emergency contacts found. Add new contacts to get started."
-          }
-          itemsPerPage={10}
-          onRowClick={handleRowClick}
-        />
-      </div>
+      <Table
+        columns={columns}
+        data={contactData}
+        loading={isLoading}
+        sortColumn={sortColumn}
+        sortDirection={sortDirection}
+        onSort={handleSort}
+        emptyMessage={
+          searchValue
+            ? `No emergency contacts found matching "${searchValue}".`
+            : "No emergency contacts found. Add new contacts to get started."
+        }
+        itemsPerPage={10}
+        onRowClick={handleRowClick}
+      />
     </div>
   );
 }

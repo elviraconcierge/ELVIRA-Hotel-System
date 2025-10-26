@@ -27,14 +27,30 @@ export function PieChart({
   donut = false,
   showLabels = true,
 }: PieChartProps) {
+  // Custom label with better positioning
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const renderLabel = (entry: any) => {
+  const renderLabel = (props: any) => {
     if (!showLabels) return null;
-    const percent = (
-      (entry.value / data.reduce((sum, item) => sum + item.value, 0)) *
-      100
-    ).toFixed(0);
-    return `${percent}%`;
+
+    const RADIAN = Math.PI / 180;
+    const { cx, cy, midAngle, innerRadius, outerRadius, percent } = props;
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    return (
+      <text
+        x={x}
+        y={y}
+        fill="white"
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontSize="14"
+        fontWeight="600"
+      >
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
   };
 
   return (
@@ -46,7 +62,7 @@ export function PieChart({
           cy="50%"
           labelLine={false}
           label={renderLabel}
-          outerRadius={donut ? 100 : 120}
+          outerRadius={donut ? 90 : 100}
           innerRadius={donut ? 60 : 0}
           fill="#8884d8"
           dataKey="value"
@@ -81,6 +97,12 @@ export function PieChart({
             height={36}
             iconType="circle"
             iconSize={10}
+            formatter={(value, entry) => {
+              const item = entry.payload as { value: number };
+              const total = data.reduce((sum, d) => sum + d.value, 0);
+              const percent = ((item.value / total) * 100).toFixed(1);
+              return `${value} (${percent}%)`;
+            }}
           />
         )}
       </RechartsPieChart>

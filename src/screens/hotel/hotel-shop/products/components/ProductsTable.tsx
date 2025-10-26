@@ -234,23 +234,21 @@ export function ProductsTable({ searchValue, onView }: ProductsTableProps) {
       )}
 
       {/* Products Table */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <Table
-          columns={columns}
-          data={productData}
-          loading={isLoading}
-          emptyMessage={
-            searchValue
-              ? `No products found matching "${searchValue}".`
-              : "No products found. Add new products to get started."
-          }
-          onRowClick={handleRowClick}
-          itemsPerPage={10}
-          sortColumn={sortColumn}
-          sortDirection={sortDirection}
-          onSort={handleSort}
-        />
-      </div>
+      <Table
+        columns={columns}
+        data={productData}
+        loading={isLoading}
+        emptyMessage={
+          searchValue
+            ? `No products found matching "${searchValue}".`
+            : "No products found. Add new products to get started."
+        }
+        onRowClick={handleRowClick}
+        itemsPerPage={10}
+        sortColumn={sortColumn}
+        sortDirection={sortDirection}
+        onSort={handleSort}
+      />
     </div>
   );
 }

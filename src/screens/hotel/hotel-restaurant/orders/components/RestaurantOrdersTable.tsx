@@ -242,19 +242,17 @@ export function RestaurantOrdersTable({
       )}
 
       {/* Restaurant Orders Table */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <Table
-          columns={columns}
-          data={orderData}
-          loading={isLoading}
-          emptyMessage="No restaurant orders found. Orders will appear here once guests place orders."
-          onRowClick={handleRowClick}
-          itemsPerPage={10}
-          sortColumn={sortColumn}
-          sortDirection={sortDirection}
-          onSort={handleSort}
-        />
-      </div>
+      <Table
+        columns={columns}
+        data={orderData}
+        loading={isLoading}
+        emptyMessage="No restaurant orders found. Orders will appear here once guests place orders."
+        onRowClick={handleRowClick}
+        itemsPerPage={10}
+        sortColumn={sortColumn}
+        sortDirection={sortDirection}
+        onSort={handleSort}
+      />
 
       {/* Order Detail Modal - View Only */}
       <RestaurantOrderModal

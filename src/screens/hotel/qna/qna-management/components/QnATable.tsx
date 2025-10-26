@@ -181,19 +181,17 @@ export function QnATable({ searchValue, onView }: QnATableProps) {
       )}
 
       {/* Q&A Table */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <Table
-          columns={columns}
-          data={qnaData}
-          loading={isLoading}
-          emptyMessage="No Q&A items found. Add new questions and answers to get started."
-          itemsPerPage={10}
-          onRowClick={handleRowClick}
-          sortColumn={sortColumn}
-          sortDirection={sortDirection}
-          onSort={handleSort}
-        />
-      </div>
+      <Table
+        columns={columns}
+        data={qnaData}
+        loading={isLoading}
+        emptyMessage="No Q&A items found. Add new questions and answers to get started."
+        itemsPerPage={10}
+        onRowClick={handleRowClick}
+        sortColumn={sortColumn}
+        sortDirection={sortDirection}
+        onSort={handleSort}
+      />
     </div>
   );
 }

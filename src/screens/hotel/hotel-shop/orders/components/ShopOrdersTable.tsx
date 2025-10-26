@@ -222,19 +222,17 @@ export function ShopOrdersTable({ searchValue }: ShopOrdersTableProps) {
       )}
 
       {/* Shop Orders Table */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <Table
-          columns={columns}
-          data={orderData}
-          loading={isLoading}
-          emptyMessage="No shop orders found. Orders will appear here once guests start purchasing items."
-          onRowClick={handleRowClick}
-          itemsPerPage={10}
-          sortColumn={sortColumn}
-          sortDirection={sortDirection}
-          onSort={handleSort}
-        />
-      </div>
+      <Table
+        columns={columns}
+        data={orderData}
+        loading={isLoading}
+        emptyMessage="No shop orders found. Orders will appear here once guests start purchasing items."
+        onRowClick={handleRowClick}
+        itemsPerPage={10}
+        sortColumn={sortColumn}
+        sortDirection={sortDirection}
+        onSort={handleSort}
+      />
 
       {/* Order Detail Modal */}
       <ShopOrderModal

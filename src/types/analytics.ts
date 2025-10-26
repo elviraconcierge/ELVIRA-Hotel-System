@@ -294,3 +294,73 @@ export interface ChartConfig {
   showLegend: boolean;
   showTooltip: boolean;
 }
+
+// ============================================================================
+// AI Analytics
+// ============================================================================
+
+export interface GuestMessageAnalytics {
+  totalMessages: number;
+  analyzedMessages: number;
+  averageSentiment: number;
+  topTopics: TopicCount[];
+  topSubtopics: SubtopicCount[];
+  sentimentDistribution: SentimentData[];
+  messagesByGuest: GuestMessageData[];
+  topicTrends: TopicTrendData[];
+  urgencyDistribution: UrgencyData[];
+}
+
+export interface TopicCount {
+  topic: string;
+  count: number;
+  percentage: number;
+  cumulativePercentage: number;
+  subtopics: SubtopicCount[];
+}
+
+export interface SubtopicCount {
+  subtopic: string;
+  count: number;
+  percentage: number;
+  cumulativePercentage: number;
+}
+
+export interface SentimentData {
+  sentiment: string;
+  count: number;
+}
+
+export interface GuestMessageData {
+  guestId: string;
+  guestName: string;
+  email: string;
+  messageCount: number;
+  lastMessageDate: string;
+  averageSentiment: string;
+  topTopics: string[];
+  [key: string]: unknown;
+}
+
+export interface TopicTrendData {
+  date: string;
+  [topic: string]: string | number;
+}
+
+export interface UrgencyData {
+  urgency: string;
+  count: number;
+}
+
+export interface MessageWithGuest {
+  id: string;
+  message_text: string;
+  topics: string[] | null;
+  subtopics: string | null;
+  sentiment: string | null;
+  urgency: string | null;
+  created_at: string;
+  guest_id: string | null;
+  guest_name: string | null;
+  guest_email: string | null;
+}

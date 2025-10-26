@@ -216,19 +216,17 @@ export function AmenityOrdersTable({ searchValue }: AmenityOrdersTableProps) {
       )}
 
       {/* Amenity Orders Table */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <Table
-          columns={orderColumns}
-          data={orderData}
-          loading={isLoading}
-          emptyMessage="No amenity orders found. Orders will appear here once guests start requesting amenities."
-          onRowClick={handleRowClick}
-          itemsPerPage={10}
-          sortColumn={sortColumn}
-          sortDirection={sortDirection}
-          onSort={handleSort}
-        />
-      </div>
+      <Table
+        columns={orderColumns}
+        data={orderData}
+        loading={isLoading}
+        emptyMessage="No amenity orders found. Orders will appear here once guests start requesting amenities."
+        onRowClick={handleRowClick}
+        itemsPerPage={10}
+        sortColumn={sortColumn}
+        sortDirection={sortDirection}
+        onSort={handleSort}
+      />
 
       {/* Request Detail Modal - View Only */}
       <AmenityRequestModal

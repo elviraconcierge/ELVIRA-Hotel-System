@@ -256,19 +256,17 @@ export function MenuItemsTable({ searchValue, onView }: MenuItemsTableProps) {
       )}
 
       {/* Menu Items Table */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <Table
-          columns={columns}
-          data={menuItemData}
-          loading={isLoading}
-          emptyMessage="No menu items found. Add new menu items to get started."
-          onRowClick={handleRowClick}
-          itemsPerPage={10}
-          sortColumn={sortColumn}
-          sortDirection={sortDirection}
-          onSort={handleSort}
-        />
-      </div>
+      <Table
+        columns={columns}
+        data={menuItemData}
+        loading={isLoading}
+        emptyMessage="No menu items found. Add new menu items to get started."
+        onRowClick={handleRowClick}
+        itemsPerPage={10}
+        sortColumn={sortColumn}
+        sortDirection={sortDirection}
+        onSort={handleSort}
+      />
     </div>
   );
 }

@@ -232,23 +232,21 @@ export function AmenitiesTable({ searchValue, onView }: AmenitiesTableProps) {
       )}
 
       {/* Amenities Table */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <Table
-          columns={amenityColumns}
-          data={amenityData}
-          loading={isLoading}
-          sortColumn={sortColumn}
-          sortDirection={sortDirection}
-          onSort={handleSort}
-          emptyMessage={
-            searchValue
-              ? `No amenities found matching "${searchValue}".`
-              : "No amenities found. Add new amenities to get started."
-          }
-          onRowClick={handleRowClick}
-          itemsPerPage={10}
-        />
-      </div>
+      <Table
+        columns={amenityColumns}
+        data={amenityData}
+        loading={isLoading}
+        sortColumn={sortColumn}
+        sortDirection={sortDirection}
+        onSort={handleSort}
+        emptyMessage={
+          searchValue
+            ? `No amenities found matching "${searchValue}".`
+            : "No amenities found. Add new amenities to get started."
+        }
+        onRowClick={handleRowClick}
+        itemsPerPage={10}
+      />
     </div>
   );
 }

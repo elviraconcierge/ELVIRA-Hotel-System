@@ -199,23 +199,21 @@ export function RestaurantsTable({
       )}
 
       {/* Restaurants Table */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <Table
-          columns={columns}
-          data={restaurantData}
-          loading={isLoading}
-          emptyMessage={
-            searchValue
-              ? `No restaurants found matching "${searchValue}".`
-              : "No restaurants found. Add new restaurants to get started."
-          }
-          itemsPerPage={10}
-          onRowClick={handleRowClick}
-          sortColumn={sortColumn}
-          sortDirection={sortDirection}
-          onSort={handleSort}
-        />
-      </div>
+      <Table
+        columns={columns}
+        data={restaurantData}
+        loading={isLoading}
+        emptyMessage={
+          searchValue
+            ? `No restaurants found matching "${searchValue}".`
+            : "No restaurants found. Add new restaurants to get started."
+        }
+        itemsPerPage={10}
+        onRowClick={handleRowClick}
+        sortColumn={sortColumn}
+        sortDirection={sortDirection}
+        onSort={handleSort}
+      />
 
       {/* Delete Confirmation Modal */}
       <ConfirmationModal

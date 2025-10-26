@@ -175,23 +175,21 @@ export function AnnouncementsTable({
       )}
 
       {/* Announcements Table */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <Table
-          columns={columns}
-          data={announcementData}
-          loading={isLoading}
-          sortColumn={sortColumn}
-          sortDirection={sortDirection}
-          onSort={handleSort}
-          emptyMessage={
-            searchValue
-              ? `No announcements found matching "${searchValue}".`
-              : "No announcements found. Create new announcements to get started."
-          }
-          itemsPerPage={10}
-          onRowClick={handleRowClick}
-        />
-      </div>
+      <Table
+        columns={columns}
+        data={announcementData}
+        loading={isLoading}
+        sortColumn={sortColumn}
+        sortDirection={sortDirection}
+        onSort={handleSort}
+        emptyMessage={
+          searchValue
+            ? `No announcements found matching "${searchValue}".`
+            : "No announcements found. Create new announcements to get started."
+        }
+        itemsPerPage={10}
+        onRowClick={handleRowClick}
+      />
     </div>
   );
 }
