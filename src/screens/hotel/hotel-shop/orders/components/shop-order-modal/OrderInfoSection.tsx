@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useState, useEffect } from "react";
 import {
   ModalFormSection,
   ModalFormField,
@@ -13,6 +13,14 @@ interface OrderInfoSectionProps {
 
 export function OrderInfoSection({ order }: OrderInfoSectionProps) {
   const updateStatus = useUpdateShopOrderStatus();
+
+  // Local state for optimistic updates
+  const [currentStatus, setCurrentStatus] = useState(order.status);
+
+  // Sync local state when order prop changes
+  useEffect(() => {
+    setCurrentStatus(order.status);
+  }, [order.status]);
 
   // Status options for shop orders (memoized)
   const orderStatusOptions = useMemo(
@@ -31,6 +39,9 @@ export function OrderInfoSection({ order }: OrderInfoSectionProps) {
   // Handle status change (wrapped in useCallback)
   const handleStatusChange = useCallback(
     async (newStatus: string) => {
+      // Optimistic update
+      setCurrentStatus(newStatus);
+
       try {
         await updateStatus.mutateAsync({
           id: order.id,
@@ -38,9 +49,11 @@ export function OrderInfoSection({ order }: OrderInfoSectionProps) {
         });
       } catch (error) {
         console.error("Failed to update shop order status:", error);
+        // Revert on error
+        setCurrentStatus(order.status);
       }
     },
-    [updateStatus, order.id]
+    [updateStatus, order.id, order.status]
   );
 
   return (
@@ -50,10 +63,10 @@ export function OrderInfoSection({ order }: OrderInfoSectionProps) {
           label="Order ID"
           value={order.id.substring(0, 8).toUpperCase()}
         />
-        <div className="flex flex-col">
+        <div className="flex flex-col items-start">
           <span className="text-sm font-medium text-gray-700 mb-1">Status</span>
           <StatusBadge
-            status={order.status}
+            status={currentStatus}
             statusOptions={orderStatusOptions}
             onStatusChange={handleStatusChange}
           />

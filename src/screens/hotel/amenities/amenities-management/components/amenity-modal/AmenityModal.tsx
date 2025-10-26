@@ -1,86 +1,128 @@
-import { useState, useEffect } from "react";
-import { ModalForm, ModalFormActions } from "../../../../../../components/ui";
-import { useAmenityForm } from "../../../../../../hooks/forms";
+import { useEffect, useState } from "react";
+import {
+  ModalForm,
+  ModalFormActions,
+} from "../../../../../../components/ui/modalform";
 import { useUpdateAmenity } from "../../../../../../hooks/amenities/amenities/useAmenities";
-import { AmenityImageSection } from "./AmenityImageSection";
-import { AmenityBasicSection } from "./AmenityBasicSection";
-import { AmenityDescriptionSection } from "./AmenityDescriptionSection";
-import { AmenityRecommendedSection } from "./AmenityRecommendedSection";
-import { AmenityMetadataSection } from "./AmenityMetadataSection";
-import type { AmenityModalProps } from "./types";
+import { ImageSection } from "./ImageSection";
+import { BasicInfoSection } from "./BasicInfoSection";
+import { DescriptionSection } from "./DescriptionSection";
+import { RecommendedSection } from "./RecommendedSection";
+import type { AmenityFormData, FormErrors, AmenityModalProps } from "./types";
+
+const AMENITY_CATEGORIES = [
+  "Room Service",
+  "Spa & Wellness",
+  "Fitness",
+  "Business Services",
+  "Entertainment",
+  "Transportation",
+  "Concierge",
+  "Laundry & Cleaning",
+  "Other Services",
+];
 
 export function AmenityModal({
   isOpen,
   onClose,
-  amenity = null,
-  mode: initialMode = "create",
+  mode,
+  amenity,
+  onSubmit,
   onEdit,
   onDelete,
 }: AmenityModalProps) {
-  const [internalMode, setInternalMode] = useState(initialMode);
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const updateAmenity = useUpdateAmenity();
+  const [formData, setFormData] = useState<AmenityFormData>({
+    name: "",
+    price: "",
+    category: "",
+    description: "",
+    imageUrl: null,
+    recommended: false,
+    isActive: true,
+  });
 
-  const {
-    formData,
-    errors,
-    isPending,
-    setFormData,
-    handleFieldChange,
-    handleSubmit,
-    resetForm,
-  } = useAmenityForm(
-    internalMode === "edit" || internalMode === "view" ? amenity : null,
-    () => {
-      handleClose();
-    }
-  );
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [isPending, setIsPending] = useState(false);
 
-  // Update internal mode when prop changes
+  // Reset form when modal opens/closes or amenity changes
   useEffect(() => {
-    setInternalMode(initialMode);
-  }, [initialMode]);
-
-  const handleClose = () => {
-    resetForm();
-    setInternalMode(initialMode);
-    onClose();
-  };
-
-  const handleEditClick = () => {
-    if (onEdit) {
-      onEdit();
-    } else {
-      setInternalMode("edit");
+    if (isOpen && amenity) {
+      setFormData({
+        name: amenity.name || "",
+        price: amenity.price?.toString() || "",
+        category: amenity.category || "",
+        description: amenity.description || "",
+        imageUrl: amenity.image_url || null,
+        recommended: amenity.recommended || false,
+        isActive: amenity.is_active,
+      });
+    } else if (isOpen && !amenity) {
+      setFormData({
+        name: "",
+        price: "",
+        category: "",
+        description: "",
+        imageUrl: null,
+        recommended: false,
+        isActive: true,
+      });
     }
-  };
+    setErrors({});
+  }, [amenity, isOpen]);
 
-  const handleDeleteClick = () => {
-    if (onDelete) {
-      onDelete();
-    }
-  };
-
-  const handleImageChange = (url: string | null) => {
-    setFormData((prev) => ({ ...prev, imageUrl: url }));
-  };
-
-  const handleFieldChangeWrapper = (
-    field: string,
+  const handleFieldChange = (
+    field: keyof AmenityFormData,
     value: string | boolean | null
   ) => {
-    if (typeof value === "string") {
-      handleFieldChange(field, value);
-    } else {
-      // Handle boolean or null values directly
-      setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    // Clear error for this field
+    if (errors[field as keyof FormErrors]) {
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = "Amenity name is required";
+    }
+
+    if (!formData.price || parseFloat(formData.price) <= 0) {
+      newErrors.price = "Valid price is required";
+    }
+
+    if (!formData.category) {
+      newErrors.category = "Category is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async () => {
+    if (mode === "view") return;
+
+    if (!validateForm()) return;
+
+    setIsPending(true);
+    try {
+      await onSubmit(formData);
+      onClose();
+    } catch (error) {
+      console.error("Form submission error:", error);
+    } finally {
+      setIsPending(false);
     }
   };
 
   const handleStatusToggle = async (newStatus: boolean) => {
     if (!amenity) return;
 
-    setIsUpdatingStatus(true);
+    // Optimistically update the local state
+    setFormData((prev) => ({ ...prev, isActive: newStatus }));
+
     try {
       await updateAmenity.mutateAsync({
         id: amenity.id,
@@ -88,82 +130,73 @@ export function AmenityModal({
       });
     } catch (error) {
       console.error("Error updating amenity status:", error);
-    } finally {
-      setIsUpdatingStatus(false);
+      // Revert on error
+      setFormData((prev) => ({ ...prev, isActive: !newStatus }));
     }
   };
 
-  const isDisabled = isPending || isUpdatingStatus;
+  const getTitle = () => {
+    switch (mode) {
+      case "create":
+        return "Add Amenity";
+      case "edit":
+        return "Edit Amenity";
+      case "view":
+        return "Amenity Details";
+      default:
+        return "Amenity";
+    }
+  };
 
-  const modalTitle =
-    internalMode === "view"
-      ? "Amenity Details"
-      : internalMode === "edit"
-      ? "Edit Amenity"
-      : "Add Amenity";
+  const getSubmitLabel = () => {
+    return mode === "edit" ? "Save Changes" : "Add Amenity";
+  };
 
   return (
     <ModalForm
       isOpen={isOpen}
-      onClose={handleClose}
-      title={modalTitle}
+      onClose={onClose}
+      title={getTitle()}
       size="lg"
       footer={
         <ModalFormActions
-          mode={internalMode}
-          onCancel={handleClose}
-          onEdit={handleEditClick}
-          onDelete={handleDeleteClick}
+          mode={mode}
+          onCancel={onClose}
           onSubmit={handleSubmit}
-          isPending={isDisabled}
-          submitLabel={internalMode === "edit" ? "Save Changes" : "Add Amenity"}
+          isPending={isPending}
+          submitLabel={getSubmitLabel()}
+          onEdit={onEdit}
+          onDelete={onDelete}
         />
       }
     >
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSubmit();
-        }}
-      >
-        <div className="space-y-4">
-          <AmenityImageSection
-            mode={internalMode}
-            formData={formData}
-            amenity={amenity}
-            disabled={isDisabled}
-            onImageChange={handleImageChange}
-            onStatusToggle={handleStatusToggle}
-          />
+      <ImageSection
+        formData={formData}
+        disabled={mode === "view"}
+        onChange={(url: string | null) => handleFieldChange("imageUrl", url)}
+        onStatusToggle={mode === "view" ? handleStatusToggle : undefined}
+      />
 
-          <AmenityBasicSection
-            mode={internalMode}
-            formData={formData}
-            amenity={amenity}
-            onFieldChange={handleFieldChangeWrapper}
-            errors={errors as Record<string, string | undefined>}
-            disabled={isDisabled}
-          />
+      <BasicInfoSection
+        formData={formData}
+        errors={errors}
+        mode={mode}
+        onChange={handleFieldChange}
+        categories={AMENITY_CATEGORIES}
+      />
 
-          <AmenityDescriptionSection
-            mode={internalMode}
-            formData={formData}
-            amenity={amenity}
-            onFieldChange={handleFieldChangeWrapper}
-            errors={errors as Record<string, string | undefined>}
-            disabled={isDisabled}
-          />
+      <DescriptionSection
+        formData={formData}
+        errors={errors}
+        mode={mode}
+        onChange={handleFieldChange}
+      />
 
-          <AmenityRecommendedSection
-            mode={internalMode}
-            formData={formData}
-            onFieldChange={handleFieldChangeWrapper}
-            disabled={isDisabled}
-          />
-
-          <AmenityMetadataSection mode={internalMode} amenity={amenity} />
-        </div>
-      </form>
+      <RecommendedSection
+        formData={formData}
+        mode={mode}
+        onChange={handleFieldChange}
+      />
     </ModalForm>
   );
 }

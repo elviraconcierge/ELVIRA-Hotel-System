@@ -3,6 +3,7 @@ import {
   ModalForm,
   ModalFormActions,
 } from "../../../../../../components/ui/modalform";
+import { useUpdateProduct } from "../../../../../../hooks/hotel-shop";
 import { ImageSection } from "./ImageSection";
 import { BasicInfoSection } from "./BasicInfoSection";
 import { DescriptionSection } from "./DescriptionSection";
@@ -30,6 +31,7 @@ export function ProductModal({
   onEdit,
   onDelete,
 }: ProductModalProps) {
+  const updateProduct = useUpdateProduct();
   const [formData, setFormData] = useState<ProductFormData>({
     name: "",
     price: "",
@@ -128,6 +130,24 @@ export function ProductModal({
     }
   };
 
+  const handleStatusToggle = async (newStatus: boolean) => {
+    if (!product) return;
+
+    // Optimistically update the local state
+    setFormData((prev) => ({ ...prev, isActive: newStatus }));
+
+    try {
+      await updateProduct.mutateAsync({
+        id: product.id,
+        updates: { is_active: newStatus },
+      });
+    } catch (error) {
+      console.error("Error updating product status:", error);
+      // Revert on error
+      setFormData((prev) => ({ ...prev, isActive: !newStatus }));
+    }
+  };
+
   const getTitle = () => {
     switch (mode) {
       case "create":
@@ -167,11 +187,7 @@ export function ProductModal({
         formData={formData}
         disabled={mode === "view"}
         onChange={(url) => handleFieldChange("imageUrl", url)}
-        onStatusToggle={
-          mode === "view"
-            ? (newStatus) => handleFieldChange("isActive", newStatus)
-            : undefined
-        }
+        onStatusToggle={mode === "view" ? handleStatusToggle : undefined}
       />
 
       <BasicInfoSection

@@ -1,40 +1,25 @@
-import { ModalFormSection } from "../../../../../../components/ui";
+import { ModalFormSection } from "../../../../../../components/ui/modalform";
 import {
   ItemImageUpload,
   ItemImageDisplay,
 } from "../../../../../../components/ui/forms";
-import type { AmenitySectionProps } from "./types";
+import type { AmenityFormData } from "./types";
 
-/**
- * AmenityImageSection - Image upload/display for amenities
- * Shows upload in create/edit mode, display in view mode
- */
-import { ModalFormSection } from "../../../../../../components/ui";
-import {
-  ItemImageUpload,
-  ItemImageDisplay,
-} from "../../../../../../components/ui/forms";
-import type { AmenityFormData } from "../../../../../../hooks/forms/useAmenityForm";
-
-interface AmenityImageSectionProps {
-  formData: AmenityFormData & { isActive: boolean };
+interface ImageSectionProps {
+  formData: AmenityFormData;
   disabled: boolean;
   onChange: (url: string | null) => void;
   onStatusToggle?: (newStatus: boolean) => void;
 }
 
-/**
- * AmenityImageSection - Image upload/display for amenities
- * Shows upload in create/edit mode, display in view mode
- */
-export function AmenityImageSection({
+export function ImageSection({
   formData,
   disabled,
   onChange,
   onStatusToggle,
-}: AmenityImageSectionProps) {
+}: ImageSectionProps) {
   if (disabled) {
-    // View mode: Display image with status toggle
+    // View mode - show image display
     return (
       <ModalFormSection title="Image">
         <ItemImageDisplay
@@ -48,7 +33,7 @@ export function AmenityImageSection({
     );
   }
 
-  // Create/Edit mode: Image upload
+  // Create/Edit mode - show image upload
   return (
     <ModalFormSection title="Amenity Image">
       <ItemImageUpload
@@ -61,5 +46,3 @@ export function AmenityImageSection({
     </ModalFormSection>
   );
 }
-
-```

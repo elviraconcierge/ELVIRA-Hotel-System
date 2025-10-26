@@ -3,6 +3,7 @@ import {
   ModalForm,
   ModalFormActions,
 } from "../../../../../../components/ui/modalform";
+import { useUpdateMenuItem } from "../../../../../../hooks/hotel-restaurant";
 import { ImageSection } from "./ImageSection";
 import { BasicInfoSection } from "./BasicInfoSection";
 import { DescriptionSection } from "./DescriptionSection";
@@ -49,6 +50,7 @@ export function MenuItemModal({
   onDelete,
   restaurants,
 }: MenuItemModalWithRestaurantsProps) {
+  const updateMenuItem = useUpdateMenuItem();
   const [formData, setFormData] = useState<MenuItemFormData>({
     name: "",
     price: "",
@@ -161,6 +163,24 @@ export function MenuItemModal({
     onClose();
   };
 
+  const handleStatusToggle = async (newStatus: boolean) => {
+    if (!menuItem) return;
+
+    // Optimistically update the local state
+    setFormData((prev) => ({ ...prev, isActive: newStatus }));
+
+    try {
+      await updateMenuItem.mutateAsync({
+        id: menuItem.id,
+        updates: { is_active: newStatus },
+      });
+    } catch (error) {
+      console.error("Error updating menu item status:", error);
+      // Revert on error
+      setFormData((prev) => ({ ...prev, isActive: !newStatus }));
+    }
+  };
+
   const getTitle = () => {
     switch (mode) {
       case "create":
@@ -198,6 +218,7 @@ export function MenuItemModal({
         formData={formData}
         disabled={disabled}
         onChange={(url) => handleFieldChange("imageUrl", url)}
+        onStatusToggle={disabled ? handleStatusToggle : undefined}
       />
 
       <BasicInfoSection

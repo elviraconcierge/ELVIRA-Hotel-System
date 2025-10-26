@@ -3,17 +3,13 @@ import {
   Table,
   type TableColumn,
   StatusBadge,
-  ConfirmationModal,
   RecommendedToggle,
 } from "../../../../../components/ui";
 import {
   useAmenities,
   useUpdateAmenity,
-  useDeleteAmenity,
 } from "../../../../../hooks/amenities/amenities/useAmenities";
 import { useHotelId } from "../../../../../hooks/useHotelContext";
-import { AmenityModal } from "./amenity-modal";
-import { useItemTableModals } from "../../../../../components/shared/tables/useItemTableModals";
 import type { Database } from "../../../../../types/database";
 
 type AmenityRow = Database["public"]["Tables"]["amenities"]["Row"];
@@ -27,33 +23,19 @@ interface Amenity extends Record<string, unknown> {
   category: string;
   price: string;
   hotelRecommended: boolean | null;
-  [key: string]: unknown;
 }
 
 interface AmenitiesTableProps {
   searchValue: string;
+  onView: (amenity: AmenityRow) => void;
 }
 
-export function AmenitiesTable({ searchValue }: AmenitiesTableProps) {
-  const hotelId = useHotelId();
+export function AmenitiesTable({ searchValue, onView }: AmenitiesTableProps) {
+  // Sorting state
   const [sortColumn, setSortColumn] = useState<string | undefined>(undefined);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
-  // Use shared modal state management hook
-  const {
-    selectedItem: selectedAmenity,
-    isDetailModalOpen,
-    openDetailModal,
-    closeDetailModal,
-    itemToEdit: amenityToEdit,
-    isEditModalOpen,
-    closeEditModal,
-    itemToDelete: amenityToDelete,
-    isDeleteConfirmOpen,
-    closeDeleteConfirm,
-    handleEdit,
-    handleDelete,
-  } = useItemTableModals<AmenityRow>();
+  const hotelId = useHotelId();
 
   // Fetch amenities using the hook
   const {
@@ -62,39 +44,26 @@ export function AmenitiesTable({ searchValue }: AmenitiesTableProps) {
     error,
   } = useAmenities(hotelId || undefined);
 
-  // Get the mutations
+  // Get the mutation
   const updateAmenity = useUpdateAmenity();
-  const deleteAmenity = useDeleteAmenity();
 
   // Handle status toggle
-  const handleStatusToggle = async (id: string, newStatus: boolean) => {
-    await updateAmenity.mutateAsync({
-      id,
-      updates: { is_active: newStatus },
-    });
+  const handleStatusToggle = async (amenityId: string, newStatus: boolean) => {
+    try {
+      await updateAmenity.mutateAsync({
+        id: amenityId,
+        updates: { is_active: newStatus },
+      });
+    } catch (error) {
+      console.error("Error updating amenity status:", error);
+    }
   };
 
   // Handle row click
   const handleRowClick = (row: Amenity) => {
     const fullAmenity = amenities?.find((item) => item.id === row.id);
     if (fullAmenity) {
-      openDetailModal(fullAmenity);
-    }
-  };
-
-  // Edit and delete handlers are now provided by the hook
-
-  // Confirm delete action
-  const confirmDelete = () => {
-    if (amenityToDelete && hotelId) {
-      deleteAmenity.mutate(
-        { id: amenityToDelete.id, hotelId },
-        {
-          onSuccess: () => {
-            closeDeleteConfirm();
-          },
-        }
-      );
+      onView(fullAmenity);
     }
   };
 
@@ -280,31 +249,6 @@ export function AmenitiesTable({ searchValue }: AmenitiesTableProps) {
           itemsPerPage={10}
         />
       </div>
-
-      {/* Unified Amenity Modal - handles view, edit, and create */}
-      <AmenityModal
-        isOpen={isDetailModalOpen || isEditModalOpen}
-        onClose={() => {
-          closeDetailModal();
-          closeEditModal();
-        }}
-        amenity={selectedAmenity || amenityToEdit}
-        mode={isDetailModalOpen ? "view" : "edit"}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
-
-      {/* Confirmation Modal for Delete */}
-      <ConfirmationModal
-        isOpen={isDeleteConfirmOpen}
-        title="Delete Amenity"
-        message="Are you sure you want to delete this amenity? This action cannot be undone."
-        confirmText="Delete"
-        variant="danger"
-        onConfirm={confirmDelete}
-        onClose={closeDeleteConfirm}
-        loading={deleteAmenity.isPending}
-      />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useState, useEffect } from "react";
 import { ModalFormSection, StatusBadge } from "../../../../../../components/ui";
 import { OrderField } from "../../../../../../components/ui/forms/order-details";
 import { useUpdateAmenityRequestStatus } from "../../../../../../hooks/amenities";
@@ -13,6 +13,14 @@ export function RequestScheduleSection({
 }: AmenityRequestSectionProps) {
   const updateStatus = useUpdateAmenityRequestStatus();
 
+  // Local state for optimistic updates
+  const [currentStatus, setCurrentStatus] = useState(request.status);
+
+  // Sync local state when request prop changes
+  useEffect(() => {
+    setCurrentStatus(request.status);
+  }, [request.status]);
+
   // Status options for amenity orders (memoized)
   const orderStatusOptions = useMemo(
     () => ["pending", "approved", "rejected", "completed", "cancelled"],
@@ -22,6 +30,9 @@ export function RequestScheduleSection({
   // Handle status change (wrapped in useCallback)
   const handleStatusChange = useCallback(
     async (newStatus: string) => {
+      // Optimistic update
+      setCurrentStatus(newStatus);
+
       try {
         await updateStatus.mutateAsync({
           id: request.id,
@@ -29,9 +40,11 @@ export function RequestScheduleSection({
         });
       } catch (error) {
         console.error("Failed to update amenity order status:", error);
+        // Revert on error
+        setCurrentStatus(request.status);
       }
     },
-    [updateStatus, request.id]
+    [updateStatus, request.id, request.status]
   );
 
   // Format date and time
@@ -73,7 +86,7 @@ export function RequestScheduleSection({
           Status
         </span>
         <StatusBadge
-          status={request.status}
+          status={currentStatus}
           statusOptions={orderStatusOptions}
           onStatusChange={handleStatusChange}
         />

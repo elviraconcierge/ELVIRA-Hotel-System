@@ -16,6 +16,7 @@ interface FormData {
   description: string;
   imageUrl: string | null;
   recommended: boolean;
+  isActive: boolean;
 }
 
 interface FormErrors {
@@ -33,6 +34,7 @@ const initialFormData: FormData = {
   description: "",
   imageUrl: null,
   recommended: false,
+  isActive: true,
 };
 
 const initialErrors: FormErrors = {
@@ -67,6 +69,7 @@ export function useAmenityForm(
         description: amenity.description || "",
         imageUrl: amenity.image_url,
         recommended: amenity.recommended || false,
+        isActive: amenity.is_active ?? true,
       });
     } else {
       setFormData(initialFormData);
@@ -122,6 +125,7 @@ export function useAmenityForm(
             description: formData.description.trim() || null,
             image_url: formData.imageUrl,
             recommended: formData.recommended,
+            is_active: formData.isActive,
           },
         });
       } else {
@@ -134,13 +138,15 @@ export function useAmenityForm(
           recommended: formData.recommended,
           hotel_id: hotelId,
           created_by: user.id,
-          is_active: true,
+          is_active: formData.isActive,
         });
       }
 
       resetForm();
       onSuccess();
-    } catch (error) {}
+    } catch (error) {
+      console.error("Error submitting amenity:", error);
+    }
   };
 
   const resetForm = () => {

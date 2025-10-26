@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useState, useEffect } from "react";
 import { ModalFormSection, StatusBadge } from "../../../../../../components/ui";
 import { OrderField } from "../../../../../../components/ui/forms/order-details";
 import { useUpdateDineInOrderStatus } from "../../../../../../hooks/hotel-restaurant";
@@ -12,6 +12,14 @@ interface OrderInfoSectionProps {
 export function OrderInfoSection({ order }: OrderInfoSectionProps) {
   const hotelId = useHotelId();
   const updateStatus = useUpdateDineInOrderStatus();
+
+  // Local state for optimistic updates
+  const [currentStatus, setCurrentStatus] = useState(order.status);
+
+  // Sync local state when order prop changes
+  useEffect(() => {
+    setCurrentStatus(order.status);
+  }, [order.status]);
 
   // Status options for restaurant orders (memoized)
   const orderStatusOptions = useMemo(
@@ -31,6 +39,10 @@ export function OrderInfoSection({ order }: OrderInfoSectionProps) {
   const handleStatusChange = useCallback(
     async (newStatus: string) => {
       if (!hotelId) return;
+
+      // Optimistic update
+      setCurrentStatus(newStatus);
+
       try {
         await updateStatus.mutateAsync({
           id: order.id,
@@ -39,9 +51,11 @@ export function OrderInfoSection({ order }: OrderInfoSectionProps) {
         });
       } catch (error) {
         console.error("Failed to update restaurant order status:", error);
+        // Revert on error
+        setCurrentStatus(order.status);
       }
     },
-    [updateStatus, order.id, hotelId]
+    [updateStatus, order.id, hotelId, order.status]
   );
 
   return (
@@ -69,7 +83,7 @@ export function OrderInfoSection({ order }: OrderInfoSectionProps) {
             Status
           </span>
           <StatusBadge
-            status={order.status}
+            status={currentStatus}
             statusOptions={orderStatusOptions}
             onStatusChange={handleStatusChange}
           />
