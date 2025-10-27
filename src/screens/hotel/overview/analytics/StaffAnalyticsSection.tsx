@@ -140,5 +140,3 @@ export function StaffAnalyticsSection({ hotelId }: StaffAnalyticsSectionProps) {
     </div>
   );
 }
-
-

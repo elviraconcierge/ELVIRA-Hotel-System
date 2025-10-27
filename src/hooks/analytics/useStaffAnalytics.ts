@@ -12,9 +12,17 @@ export function useStaffAnalytics(hotelId: string | undefined) {
   // Get date range for schedules (current month)
   const { startDate, endDate } = useMemo(() => {
     const currentDate = new Date();
-    const start = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-    const end = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-    
+    const start = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth(),
+      1
+    );
+    const end = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() + 1,
+      0
+    );
+
     const formatDate = (date: Date) => {
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -28,13 +36,12 @@ export function useStaffAnalytics(hotelId: string | undefined) {
     };
   }, []);
 
-  const { data: staffData, isLoading: staffLoading } = useStaffManagement(hotelId);
-  const { data: schedulesData, isLoading: schedulesLoading } = useSchedulesByDateRange(
-    hotelId,
-    startDate,
-    endDate
-  );
-  const { data: absencesData, isLoading: absencesLoading } = useAbsences(hotelId);
+  const { data: staffData, isLoading: staffLoading } =
+    useStaffManagement(hotelId);
+  const { data: schedulesData, isLoading: schedulesLoading } =
+    useSchedulesByDateRange(hotelId, startDate, endDate);
+  const { data: absencesData, isLoading: absencesLoading } =
+    useAbsences(hotelId);
 
   const isLoading = staffLoading || schedulesLoading || absencesLoading;
 
@@ -52,10 +59,12 @@ export function useStaffAnalytics(hotelId: string | undefined) {
         departmentCounts[dept] = (departmentCounts[dept] || 0) + 1;
       });
 
-      const staffByDepartment = Object.entries(departmentCounts).map(([name, value]) => ({
-        name,
-        value,
-      }));
+      const staffByDepartment = Object.entries(departmentCounts).map(
+        ([name, value]) => ({
+          name,
+          value,
+        })
+      );
 
       // 2. Staff by Position
       const positionCounts: Record<string, number> = {};
@@ -64,10 +73,12 @@ export function useStaffAnalytics(hotelId: string | undefined) {
         positionCounts[pos] = (positionCounts[pos] || 0) + 1;
       });
 
-      const staffByPosition = Object.entries(positionCounts).map(([name, value]) => ({
-        name,
-        value,
-      }));
+      const staffByPosition = Object.entries(positionCounts).map(
+        ([name, value]) => ({
+          name,
+          value,
+        })
+      );
 
       // 3. Staff by Status
       const statusCounts: Record<string, number> = {};
@@ -76,10 +87,12 @@ export function useStaffAnalytics(hotelId: string | undefined) {
         statusCounts[status] = (statusCounts[status] || 0) + 1;
       });
 
-      const staffByStatus = Object.entries(statusCounts).map(([name, value]) => ({
-        name: name.charAt(0).toUpperCase() + name.slice(1).replace("_", " "),
-        value,
-      }));
+      const staffByStatus = Object.entries(statusCounts).map(
+        ([name, value]) => ({
+          name: name.charAt(0).toUpperCase() + name.slice(1).replace("_", " "),
+          value,
+        })
+      );
 
       // 4. Schedules by Status
       const scheduleStatusCounts: Record<string, number> = {};
@@ -88,10 +101,12 @@ export function useStaffAnalytics(hotelId: string | undefined) {
         scheduleStatusCounts[status] = (scheduleStatusCounts[status] || 0) + 1;
       });
 
-      const schedulesByStatus = Object.entries(scheduleStatusCounts).map(([name, value]) => ({
-        name: name.charAt(0) + name.slice(1).toLowerCase().replace("_", " "),
-        count: value,
-      }));
+      const schedulesByStatus = Object.entries(scheduleStatusCounts).map(
+        ([name, value]) => ({
+          name: name.charAt(0) + name.slice(1).toLowerCase().replace("_", " "),
+          count: value,
+        })
+      );
 
       // 5. Absences by Type
       const absenceTypeCounts: Record<string, number> = {};
@@ -100,10 +115,12 @@ export function useStaffAnalytics(hotelId: string | undefined) {
         absenceTypeCounts[type] = (absenceTypeCounts[type] || 0) + 1;
       });
 
-      const absencesByType = Object.entries(absenceTypeCounts).map(([name, value]) => ({
-        name: name.charAt(0).toUpperCase() + name.slice(1).replace("_", " "),
-        value,
-      }));
+      const absencesByType = Object.entries(absenceTypeCounts).map(
+        ([name, value]) => ({
+          name: name.charAt(0).toUpperCase() + name.slice(1).replace("_", " "),
+          value,
+        })
+      );
 
       // 6. Absences by Status
       const absenceStatusCounts: Record<string, number> = {};
@@ -112,18 +129,23 @@ export function useStaffAnalytics(hotelId: string | undefined) {
         absenceStatusCounts[status] = (absenceStatusCounts[status] || 0) + 1;
       });
 
-      const absencesByStatus = Object.entries(absenceStatusCounts).map(([name, value]) => ({
-        name: name.charAt(0) + name.slice(1).toLowerCase(),
-        count: value,
-      }));
+      const absencesByStatus = Object.entries(absenceStatusCounts).map(
+        ([name, value]) => ({
+          name: name.charAt(0) + name.slice(1).toLowerCase(),
+          count: value,
+        })
+      );
 
       // 7. Department Performance (schedules completed)
-      const deptSchedules: Record<string, { completed: number; total: number }> = {};
+      const deptSchedules: Record<
+        string,
+        { completed: number; total: number }
+      > = {};
       schedulesData.forEach((schedule) => {
         // Find staff department from staffData
         const staffMember = staffData.find((s) => s.id === schedule.staff_id);
         const dept = staffMember?.department || "Other";
-        
+
         if (!deptSchedules[dept]) {
           deptSchedules[dept] = { completed: 0, total: 0 };
         }
@@ -133,19 +155,25 @@ export function useStaffAnalytics(hotelId: string | undefined) {
         }
       });
 
-      const departmentPerformance = Object.entries(deptSchedules).map(([name, data]) => ({
-        name,
-        completed: data.completed,
-        total: data.total,
-        rate: data.total > 0 ? Math.round((data.completed / data.total) * 100) : 0,
-      }));
+      const departmentPerformance = Object.entries(deptSchedules).map(
+        ([name, data]) => ({
+          name,
+          completed: data.completed,
+          total: data.total,
+          rate:
+            data.total > 0
+              ? Math.round((data.completed / data.total) * 100)
+              : 0,
+        })
+      );
 
       return {
         totalStaff: staffData.length,
         activeStaff: staffData.filter((s) => s.status === "active").length,
         totalSchedules: schedulesData.length,
         totalAbsences: absencesData.length,
-        pendingAbsences: absencesData.filter((a) => a.status === "PENDING").length,
+        pendingAbsences: absencesData.filter((a) => a.status === "PENDING")
+          .length,
         totalDepartments: staffByDepartment.length,
         staffByDepartment,
         staffByPosition,
@@ -156,7 +184,12 @@ export function useStaffAnalytics(hotelId: string | undefined) {
         departmentPerformance,
       };
     },
-    enabled: !!hotelId && !!staffData && !!schedulesData && !!absencesData && !isLoading,
+    enabled:
+      !!hotelId &&
+      !!staffData &&
+      !!schedulesData &&
+      !!absencesData &&
+      !isLoading,
     config: {
       staleTime: 1000 * 60 * 5, // 5 minutes
       gcTime: 1000 * 60 * 15, // 15 minutes
