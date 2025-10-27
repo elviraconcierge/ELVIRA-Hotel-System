@@ -25,6 +25,9 @@ export function ScheduleModal({
   onEdit,
   onDelete,
   prefilledDate,
+  canEdit = true,
+  canDelete = true,
+  canOnlyEditStatus = false,
 }: ScheduleModalProps) {
   const [internalMode, setInternalMode] = useState(initialMode);
   const { hotelId } = useHotelContext();
@@ -244,8 +247,8 @@ export function ScheduleModal({
         <ModalFormActions
           mode={internalMode}
           onCancel={handleClose}
-          onEdit={handleEditClick}
-          onDelete={handleDeleteClick}
+          onEdit={canEdit && onEdit ? handleEditClick : undefined}
+          onDelete={canDelete && onDelete ? handleDeleteClick : undefined}
           onSubmit={handleSubmit}
           isPending={isPending}
           submitLabel={
@@ -260,7 +263,7 @@ export function ScheduleModal({
           formData={formData}
           onFieldChange={handleFieldChange}
           errors={errors}
-          disabled={isPending}
+          disabled={isPending || (internalMode === "edit" && canOnlyEditStatus)}
           staffOptions={staffOptions}
           isLoadingStaff={isLoadingStaff}
         />
@@ -270,7 +273,7 @@ export function ScheduleModal({
           formData={formData}
           onFieldChange={handleFieldChange}
           errors={errors}
-          disabled={isPending}
+          disabled={isPending || (internalMode === "edit" && canOnlyEditStatus)}
         />
 
         <ScheduleShiftSection
@@ -278,7 +281,7 @@ export function ScheduleModal({
           formData={formData}
           onFieldChange={handleFieldChange}
           errors={errors}
-          disabled={isPending}
+          disabled={isPending || (internalMode === "edit" && canOnlyEditStatus)}
         />
 
         <ScheduleStatusSection
@@ -293,7 +296,7 @@ export function ScheduleModal({
           mode={internalMode}
           formData={formData}
           onFieldChange={handleFieldChange}
-          disabled={isPending}
+          disabled={isPending || (internalMode === "edit" && canOnlyEditStatus)}
         />
       </form>
     </ModalForm>

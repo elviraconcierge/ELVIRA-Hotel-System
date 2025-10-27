@@ -2,7 +2,10 @@ import { useState } from "react";
 import { Button, ConfirmationModal } from "../../../../components/ui";
 import { StaffTable } from "./components";
 import { StaffModal } from "./components/modals/staff-modal";
-import { useDeleteStaff } from "../../../../hooks/hotel-staff";
+import {
+  useDeleteStaff,
+  useStaffPermissions,
+} from "../../../../hooks/hotel-staff";
 
 interface StaffData {
   id: string;
@@ -36,6 +39,7 @@ export function StaffManagement({ searchValue }: StaffManagementProps) {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   const deleteStaff = useDeleteStaff();
+  const permissions = useStaffPermissions();
 
   const handleAddNew = () => {
     setIsAddModalOpen(true);
@@ -89,9 +93,11 @@ export function StaffManagement({ searchValue }: StaffManagementProps) {
         <h2 className="text-xl font-semibold text-gray-900">
           Staff Management
         </h2>
-        <Button variant="primary" onClick={handleAddNew}>
-          + Add Member
-        </Button>
+        {permissions.canAddStaff && (
+          <Button variant="primary" onClick={handleAddNew}>
+            + Add Member
+          </Button>
+        )}
       </div>
       <p className="text-gray-500">
         Manage hotel staff members, their roles, and permissions.
@@ -114,6 +120,16 @@ export function StaffManagement({ searchValue }: StaffManagementProps) {
         mode={modalMode}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        canEdit={
+          selectedStaff ? permissions.canEditStaff(selectedStaff.id) : false
+        }
+        canDelete={
+          selectedStaff ? permissions.canDeleteStaff(selectedStaff.id) : false
+        }
+        canEditEmployment={
+          !permissions.canOnlyEditPersonalData(selectedStaff?.id || "")
+        }
+        isOwnProfile={selectedStaff?.id === permissions.currentUserId}
       />
 
       {/* Delete Confirmation Modal */}

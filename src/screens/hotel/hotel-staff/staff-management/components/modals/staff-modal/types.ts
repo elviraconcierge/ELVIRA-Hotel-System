@@ -48,6 +48,11 @@ export interface StaffModalProps {
   mode?: "create" | "edit" | "view";
   onEdit?: () => void;
   onDelete?: () => void;
+  canEditEmployment?: boolean; // If false, user can only edit personal data
+  // Permission flags
+  canEdit?: boolean; // Can the current user edit this staff member?
+  canDelete?: boolean; // Can the current user delete this staff member?
+  isOwnProfile?: boolean; // Is this the current user's profile?
 }
 
 export interface StaffModalHeaderProps {

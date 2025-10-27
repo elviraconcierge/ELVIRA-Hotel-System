@@ -43,16 +43,8 @@ export function CalendarGrid({
       const matchesStatus =
         statusFilter === "All Statuses" ||
         schedule.status === statusFilter.toUpperCase();
-      const matchesSearch =
-        !searchValue ||
-        schedule.staff?.hotel_staff_personal_data?.first_name
-          ?.toLowerCase()
-          .includes(searchValue.toLowerCase()) ||
-        schedule.staff?.hotel_staff_personal_data?.last_name
-          ?.toLowerCase()
-          .includes(searchValue.toLowerCase());
 
-      return matchesDateRange && matchesStatus && matchesSearch;
+      return matchesDateRange && matchesStatus;
     });
   };
 

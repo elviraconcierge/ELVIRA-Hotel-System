@@ -16,9 +16,7 @@ export type Database = {
     Tables: {
       absence_requests: {
         Row: {
-          consent_date: string | null;
           created_at: string | null;
-          data_processing_consent: boolean;
           end_date: string;
           hotel_id: string;
           id: string;
@@ -30,9 +28,7 @@ export type Database = {
           updated_at: string | null;
         };
         Insert: {
-          consent_date?: string | null;
           created_at?: string | null;
-          data_processing_consent?: boolean;
           end_date: string;
           hotel_id: string;
           id?: string;
@@ -44,9 +40,7 @@ export type Database = {
           updated_at?: string | null;
         };
         Update: {
-          consent_date?: string | null;
           created_at?: string | null;
-          data_processing_consent?: boolean;
           end_date?: string;
           hotel_id?: string;
           id?: string;
@@ -1391,6 +1385,7 @@ export type Database = {
           location: unknown | null;
           longitude: number | null;
           main_contact: string | null;
+          membership: string | null;
           name: string;
           number_rooms: number | null;
           official_languages: string[] | null;
@@ -1418,6 +1413,7 @@ export type Database = {
           location?: unknown | null;
           longitude?: number | null;
           main_contact?: string | null;
+          membership?: string | null;
           name: string;
           number_rooms?: number | null;
           official_languages?: string[] | null;
@@ -1445,6 +1441,7 @@ export type Database = {
           location?: unknown | null;
           longitude?: number | null;
           main_contact?: string | null;
+          membership?: string | null;
           name?: string;
           number_rooms?: number | null;
           official_languages?: string[] | null;

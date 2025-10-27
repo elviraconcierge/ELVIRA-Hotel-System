@@ -48,6 +48,10 @@ CREATE TABLE IF NOT EXISTS thirdparty_places (
   -- Elvira Approval
   elvira_approved BOOLEAN DEFAULT false, -- Whether Elvira has approved this place for hotels to see
   
+  -- User Tracking
+  fetched_by UUID REFERENCES auth.users(id) ON DELETE SET NULL, -- User who fetched/added this place
+  approved_by UUID REFERENCES auth.users(id) ON DELETE SET NULL, -- User who approved this place
+  
   -- Timestamps
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -61,6 +65,8 @@ CREATE INDEX IF NOT EXISTS idx_thirdparty_places_rating ON thirdparty_places(rat
 CREATE INDEX IF NOT EXISTS idx_thirdparty_places_types ON thirdparty_places USING GIN(types);
 CREATE INDEX IF NOT EXISTS idx_thirdparty_places_elvira_approved ON thirdparty_places(elvira_approved);
 CREATE INDEX IF NOT EXISTS idx_thirdparty_places_category_approved ON thirdparty_places(category, elvira_approved);
+CREATE INDEX IF NOT EXISTS idx_thirdparty_places_fetched_by ON thirdparty_places(fetched_by);
+CREATE INDEX IF NOT EXISTS idx_thirdparty_places_approved_by ON thirdparty_places(approved_by);
 
 -- Enable Row Level Security
 ALTER TABLE thirdparty_places ENABLE ROW LEVEL SECURITY;
@@ -107,3 +113,5 @@ COMMENT ON COLUMN thirdparty_places.category IS 'Our categorization: gastronomy,
 COMMENT ON COLUMN thirdparty_places.last_fetched_at IS 'Last time data was fetched from Google Places API';
 COMMENT ON COLUMN thirdparty_places.api_response IS 'Full API response for debugging and future reference';
 COMMENT ON COLUMN thirdparty_places.elvira_approved IS 'Indicates if this place has been approved by Elvira admin to be visible to hotels';
+COMMENT ON COLUMN thirdparty_places.fetched_by IS 'User ID of the person who fetched/added this place from Google Places API';
+COMMENT ON COLUMN thirdparty_places.approved_by IS 'User ID of the person who approved this place for hotels to see';

@@ -74,9 +74,18 @@ export function useTogglePlaceApproval() {
       placeId: string;
       approved: boolean;
     }) => {
+      // Get current user ID
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      const updateData = approved
+        ? { elvira_approved: true, approved_by: user?.id || null }
+        : { elvira_approved: false, approved_by: null };
+
       const { error } = await supabase
         .from("thirdparty_places")
-        .update({ elvira_approved: approved })
+        .update(updateData)
         .eq("id", placeId);
 
       if (error) throw error;
@@ -104,9 +113,18 @@ export function useBulkApprovePlaces() {
       placeIds: string[];
       approved: boolean;
     }) => {
+      // Get current user ID
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      const updateData = approved
+        ? { elvira_approved: true, approved_by: user?.id || null }
+        : { elvira_approved: false, approved_by: null };
+
       const { error } = await supabase
         .from("thirdparty_places")
-        .update({ elvira_approved: approved })
+        .update(updateData)
         .in("id", placeIds);
 
       if (error) throw error;

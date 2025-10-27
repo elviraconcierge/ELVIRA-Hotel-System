@@ -11,7 +11,11 @@ export function useRejectPlace() {
     mutationFn: async (placeId: string) => {
       const { data, error } = await supabase
         .from("thirdparty_places")
-        .update({ elvira_approved: false, hotel_recommended: false })
+        .update({
+          elvira_approved: false,
+          hotel_recommended: false,
+          approved_by: null, // Clear approved_by when rejecting
+        })
         .eq("id", placeId)
         .select()
         .single();

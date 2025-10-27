@@ -26,6 +26,9 @@ export function TaskModal({
   mode = "create",
   onEdit,
   onDelete,
+  canEdit = true,
+  canDelete = true,
+  canOnlyEditStatus = false,
 }: TaskModalProps) {
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
@@ -151,8 +154,8 @@ export function TaskModal({
         <ModalFormActions
           mode={internalMode}
           onCancel={handleClose}
-          onEdit={handleEditClick}
-          onDelete={handleDeleteClick}
+          onEdit={canEdit && onEdit ? handleEditClick : undefined}
+          onDelete={canDelete && onDelete ? handleDeleteClick : undefined}
           onSubmit={handleSubmit}
           isPending={isPending}
           submitLabel={internalMode === "edit" ? "Update Task" : "Create Task"}
@@ -166,7 +169,7 @@ export function TaskModal({
           formData={formData}
           onFieldChange={handleFieldChange}
           errors={errors}
-          disabled={isPending}
+          disabled={isPending || (isEditMode && canOnlyEditStatus)}
         />
 
         {/* Task Type & Priority */}
@@ -175,7 +178,7 @@ export function TaskModal({
           formData={formData}
           onFieldChange={handleFieldChange}
           errors={errors}
-          disabled={isPending}
+          disabled={isPending || (isEditMode && canOnlyEditStatus)}
         />
 
         {/* Assignment & Status */}
@@ -186,6 +189,7 @@ export function TaskModal({
           disabled={isPending}
           staffOptions={staffOptions}
           isLoadingStaff={isLoadingStaff}
+          canOnlyEditStatus={canOnlyEditStatus}
         />
 
         {/* Due Date & Time */}
@@ -193,7 +197,7 @@ export function TaskModal({
           mode={internalMode}
           formData={formData}
           onFieldChange={handleFieldChange}
-          disabled={isPending}
+          disabled={isPending || (isEditMode && canOnlyEditStatus)}
         />
       </form>
     </ModalForm>

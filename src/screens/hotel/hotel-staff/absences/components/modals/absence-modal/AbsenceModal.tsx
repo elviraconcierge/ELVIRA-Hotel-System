@@ -4,6 +4,7 @@ import {
   ModalFormActions,
 } from "../../../../../../../components/ui";
 import { useCurrentHotelStaff } from "../../../../../../../hooks/hotel-staff/staff-management";
+import { useCurrentUserHotel } from "../../../../../../../hooks";
 import {
   useCreateAbsenceRequest,
   useUpdateAbsenceRequest,
@@ -26,6 +27,15 @@ export function AbsenceModal({
   const createAbsenceRequest = useCreateAbsenceRequest();
   const updateAbsenceRequest = useUpdateAbsenceRequest();
   const { data: staffData, isLoading: isLoadingStaff } = useCurrentHotelStaff();
+  const { data: currentUser } = useCurrentUserHotel();
+
+  const isHotelStaff = currentUser?.position === "Hotel Staff";
+
+  console.log("[AbsenceModal] User info:", {
+    position: currentUser?.position,
+    staffId: currentUser?.staffId,
+    isHotelStaff,
+  });
 
   const [formData, setFormData] = useState<AbsenceFormData>({
     staffId: "",
@@ -34,7 +44,6 @@ export function AbsenceModal({
     endDate: "",
     status: "pending",
     notes: "",
-    dataProcessingConsent: false,
   });
 
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
@@ -54,20 +63,26 @@ export function AbsenceModal({
         endDate: absence.end_date,
         status: absence.status,
         notes: absence.notes || "",
-        dataProcessingConsent: absence.data_processing_consent,
       });
     } else if (internalMode === "create") {
+      // Auto-fill staff ID for Hotel Staff users
+      const defaultStaffId = isHotelStaff ? currentUser?.staffId || "" : "";
+
+      console.log("[AbsenceModal] Create mode - default staff ID:", {
+        defaultStaffId,
+        isHotelStaff,
+      });
+
       setFormData({
-        staffId: "",
+        staffId: defaultStaffId,
         requestType: "",
         startDate: "",
         endDate: "",
         status: "pending",
         notes: "",
-        dataProcessingConsent: false,
       });
     }
-  }, [absence, internalMode, isOpen]);
+  }, [absence, internalMode, isOpen, isHotelStaff, currentUser?.staffId]);
 
   const validateForm = () => {
     const newErrors: Record<string, string | undefined> = {};
@@ -118,10 +133,6 @@ export function AbsenceModal({
             end_date: formData.endDate,
             status: formData.status,
             notes: formData.notes.trim() || null,
-            data_processing_consent: formData.dataProcessingConsent,
-            consent_date: formData.dataProcessingConsent
-              ? new Date().toISOString()
-              : null,
           },
         });
       } else if (internalMode === "create") {
@@ -132,10 +143,6 @@ export function AbsenceModal({
           end_date: formData.endDate,
           status: formData.status,
           notes: formData.notes.trim() || null,
-          data_processing_consent: formData.dataProcessingConsent,
-          consent_date: formData.dataProcessingConsent
-            ? new Date().toISOString()
-            : null,
         });
       }
 
@@ -153,7 +160,6 @@ export function AbsenceModal({
       endDate: "",
       status: "pending",
       notes: "",
-      dataProcessingConsent: false,
     });
     setErrors({});
     setInternalMode(initialMode);
@@ -219,8 +225,8 @@ export function AbsenceModal({
         <ModalFormActions
           mode={internalMode}
           onCancel={handleClose}
-          onEdit={handleEditClick}
-          onDelete={handleDeleteClick}
+          onEdit={onEdit ? handleEditClick : undefined}
+          onDelete={onDelete ? handleDeleteClick : undefined}
           onSubmit={handleSubmit}
           isPending={isPending}
           submitLabel={
@@ -238,6 +244,14 @@ export function AbsenceModal({
           disabled={isPending}
           staffOptions={staffOptions}
           isLoadingStaff={isLoadingStaff}
+          isHotelStaff={isHotelStaff}
+          currentUserName={
+            isHotelStaff
+              ? `${currentUser?.firstName || ""} ${
+                  currentUser?.lastName || ""
+                }`.trim()
+              : undefined
+          }
         />
 
         <AbsenceTypeSection
@@ -246,6 +260,7 @@ export function AbsenceModal({
           onFieldChange={handleFieldChange}
           errors={errors}
           disabled={isPending}
+          isHotelStaff={isHotelStaff}
         />
 
         <AbsenceDatesSection

@@ -30,6 +30,10 @@ export function StaffModal({
   mode = "create",
   onEdit,
   onDelete,
+  canEditEmployment = true,
+  canEdit = true,
+  canDelete = true,
+  isOwnProfile = false,
 }: StaffModalProps) {
   const { hotelId } = useCurrentUserHotelId();
   const queryClient = useQueryClient();
@@ -231,8 +235,8 @@ export function StaffModal({
         <ModalFormActions
           mode={internalMode}
           onCancel={handleClose}
-          onEdit={handleEditClick}
-          onDelete={handleDeleteClick}
+          onEdit={canEdit && onEdit ? handleEditClick : undefined}
+          onDelete={canDelete && onDelete ? handleDeleteClick : undefined}
           onSubmit={handleSubmit}
           isPending={isPending}
           submitLabel={
@@ -243,25 +247,27 @@ export function StaffModal({
     >
       <form onSubmit={handleSubmit}>
         {/* Avatar Section - Different components for view vs edit/create modes */}
-        {isViewMode ? (
-          // View mode: show read-only avatar if it exists
-          formData.avatarUrl && (
-            <StaffAvatarSection
-              avatarUrl={formData.avatarUrl}
-              fullName={`${formData.firstName} ${formData.lastName}`.trim()}
-            />
-          )
-        ) : (
-          // Create/Edit mode: show upload interface
-          <StaffAvatarUploadSection
-            avatarUrl={formData.avatarUrl}
-            fullName={`${formData.firstName} ${formData.lastName}`.trim()}
-            onAvatarChange={(url) => handleFieldChange("avatarUrl", url || "")}
-            disabled={isPending}
-          />
-        )}
+        {isViewMode
+          ? // View mode: show read-only avatar if it exists
+            formData.avatarUrl && (
+              <StaffAvatarSection
+                avatarUrl={formData.avatarUrl}
+                fullName={`${formData.firstName} ${formData.lastName}`.trim()}
+              />
+            )
+          : // Create/Edit mode: show upload interface (only if user can edit)
+            canEdit && (
+              <StaffAvatarUploadSection
+                avatarUrl={formData.avatarUrl}
+                fullName={`${formData.firstName} ${formData.lastName}`.trim()}
+                onAvatarChange={(url) =>
+                  handleFieldChange("avatarUrl", url || "")
+                }
+                disabled={isPending}
+              />
+            )}
 
-        {/* Basic Information */}
+        {/* Basic Information - Can be edited by user for their own profile */}
         <StaffBasicSection
           mode={internalMode}
           formData={formData}
@@ -270,16 +276,16 @@ export function StaffModal({
           disabled={isPending}
         />
 
-        {/* Employment Information */}
+        {/* Employment Information - Only admins can edit this */}
         <StaffEmploymentSection
           mode={internalMode}
           formData={formData}
           onFieldChange={handleFieldChange}
           errors={errors}
-          disabled={isPending}
+          disabled={isPending || !canEditEmployment}
         />
 
-        {/* Contact Information */}
+        {/* Contact Information - Can be edited by user for their own profile */}
         <StaffContactSection
           mode={internalMode}
           formData={formData}
@@ -287,7 +293,7 @@ export function StaffModal({
           disabled={isPending}
         />
 
-        {/* Address Information */}
+        {/* Address Information - Can be edited by user for their own profile */}
         <StaffAddressSection
           mode={internalMode}
           formData={formData}
@@ -295,7 +301,7 @@ export function StaffModal({
           disabled={isPending}
         />
 
-        {/* Emergency Contact */}
+        {/* Emergency Contact - Can be edited by user for their own profile */}
         <StaffEmergencySection
           mode={internalMode}
           formData={formData}

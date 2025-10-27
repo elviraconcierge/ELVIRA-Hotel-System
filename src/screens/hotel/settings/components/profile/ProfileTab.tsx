@@ -1,4 +1,9 @@
-import { useAuth, useHotelId, useHotelProfile } from "../../../../../hooks";
+import {
+  useAuth,
+  useHotelId,
+  useHotelProfile,
+  useCurrentUserHotel,
+} from "../../../../../hooks";
 
 export function ProfileTab() {
   const { user } = useAuth();
@@ -6,6 +11,7 @@ export function ProfileTab() {
   const { data: hotel, isLoading: hotelLoading } = useHotelProfile(
     hotelId || undefined
   );
+  const { data: currentUser } = useCurrentUserHotel();
 
   if (hotelLoading) {
     return (
@@ -357,18 +363,24 @@ export function ProfileTab() {
           <div>
             <p className="text-sm text-gray-500 mb-1">Your Role</p>
             <p className="text-xl font-bold text-gray-900">
-              {user?.role === "hotel"
+              {currentUser?.position
+                ? `${currentUser.position}${
+                    currentUser.department ? ` - ${currentUser.department}` : ""
+                  }`
+                : user?.role === "hotel"
                 ? "Hotel Admin - Manager"
                 : user?.role || "N/A"}
             </p>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm text-emerald-600 font-medium">
-              Admin Access
+              {currentUser?.position || "Staff Member"}
             </span>
             <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center">
               <span className="text-white text-sm font-bold">
-                {user?.email?.charAt(0).toUpperCase() || "?"}
+                {currentUser?.firstName?.charAt(0).toUpperCase() ||
+                  user?.email?.charAt(0).toUpperCase() ||
+                  "?"}
               </span>
             </div>
           </div>

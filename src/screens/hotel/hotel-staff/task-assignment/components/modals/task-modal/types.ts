@@ -33,6 +33,10 @@ export interface TaskModalProps {
   mode?: "create" | "edit" | "view";
   onEdit?: () => void;
   onDelete?: () => void;
+  // Permission flags
+  canEdit?: boolean; // Can the current user edit this task?
+  canDelete?: boolean; // Can the current user delete this task?
+  canOnlyEditStatus?: boolean; // Can only edit status field (non-admins)
 }
 
 export interface TaskSectionProps {
@@ -44,6 +48,7 @@ export interface TaskSectionProps {
   disabled?: boolean;
   staffOptions?: Array<{ value: string; label: string }>;
   isLoadingStaff?: boolean;
+  canOnlyEditStatus?: boolean; // For restricting non-admins to status field only
 }
 
 export type { TaskRow };

@@ -9,9 +9,17 @@ export function useApprovePlace() {
 
   return useMutation({
     mutationFn: async (placeId: string) => {
+      // Get current user ID
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       const { data, error } = await supabase
         .from("thirdparty_places")
-        .update({ elvira_approved: true })
+        .update({
+          elvira_approved: true,
+          approved_by: user?.id || null,
+        })
         .eq("id", placeId)
         .select()
         .single();

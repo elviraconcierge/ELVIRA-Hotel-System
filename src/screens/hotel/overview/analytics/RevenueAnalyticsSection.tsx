@@ -1,4 +1,10 @@
-import { DollarSign, TrendingUp, Utensils, ShoppingCart } from "lucide-react";
+import {
+  DollarSign,
+  TrendingUp,
+  Utensils,
+  ShoppingCart,
+  Sparkles,
+} from "lucide-react";
 import {
   StatCard,
   StatCardsGrid,
@@ -34,7 +40,7 @@ export function RevenueAnalyticsSection({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
       {/* Stat Cards Row */}
-      <StatCardsGrid columns={4}>
+      <StatCardsGrid columns={5}>
         <StatCard
           title="Total Revenue"
           value={`$${analytics.totalRevenue.toLocaleString()}`}
@@ -58,6 +64,12 @@ export function RevenueAnalyticsSection({
           value={`$${bySource.shop.toLocaleString()}`}
           icon={<ShoppingCart className="w-6 h-6 text-purple-600" />}
           variant="default"
+        />
+        <StatCard
+          title="Amenities Revenue"
+          value={`$${bySource.amenities.toLocaleString()}`}
+          icon={<Sparkles className="w-6 h-6 text-emerald-600" />}
+          variant="primary"
         />
       </StatCardsGrid>
 

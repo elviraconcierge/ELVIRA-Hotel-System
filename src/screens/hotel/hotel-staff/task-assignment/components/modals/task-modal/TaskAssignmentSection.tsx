@@ -23,6 +23,7 @@ export function TaskAssignmentSection({
   disabled = false,
   staffOptions = [],
   isLoadingStaff = false,
+  canOnlyEditStatus = false,
 }: TaskSectionProps) {
   const isViewMode = mode === "view";
   const isEditMode = mode === "edit";
@@ -36,7 +37,9 @@ export function TaskAssignmentSection({
           value={formData?.staffId || ""}
           onChange={(e) => onFieldChange?.("staffId", e.target.value)}
           options={staffOptions}
-          disabled={isDisabled || isLoadingStaff}
+          disabled={
+            isDisabled || isLoadingStaff || (isEditMode && canOnlyEditStatus)
+          }
         />
 
         {isEditMode && (

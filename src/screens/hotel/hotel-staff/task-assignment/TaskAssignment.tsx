@@ -2,7 +2,10 @@ import { useState } from "react";
 import { Button, ConfirmationModal } from "../../../../components/ui";
 import { TasksTable } from "./components";
 import { TaskModal } from "./components/modals/task-modal";
-import { useDeleteTask } from "../../../../hooks/hotel-staff";
+import {
+  useDeleteTask,
+  useStaffPermissions,
+} from "../../../../hooks/hotel-staff";
 import type { Database } from "../../../../types/database";
 
 type TaskRow = Database["public"]["Tables"]["tasks"]["Row"];
@@ -33,6 +36,7 @@ export function TaskAssignment({ searchValue }: TaskAssignmentProps) {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   const deleteTask = useDeleteTask();
+  const permissions = useStaffPermissions();
 
   const handleAddNew = () => {
     setIsAddModalOpen(true);
@@ -79,9 +83,11 @@ export function TaskAssignment({ searchValue }: TaskAssignmentProps) {
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold text-gray-900">Task Assignment</h2>
-        <Button variant="primary" onClick={handleAddNew}>
-          + Add Task
-        </Button>
+        {permissions.canAddTask && (
+          <Button variant="primary" onClick={handleAddNew}>
+            + Add Task
+          </Button>
+        )}
       </div>
       <p className="text-gray-500">
         Assign and track tasks for hotel staff members.
@@ -104,6 +110,9 @@ export function TaskAssignment({ searchValue }: TaskAssignmentProps) {
         mode={modalMode}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        canEdit={permissions.canEditTask()}
+        canDelete={permissions.canDeleteTask()}
+        canOnlyEditStatus={permissions.canOnlyEditTaskStatus()}
       />
 
       {/* Delete Confirmation Modal */}

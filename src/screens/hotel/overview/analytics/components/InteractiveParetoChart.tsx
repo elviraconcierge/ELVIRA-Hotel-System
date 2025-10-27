@@ -13,6 +13,19 @@ export function InteractiveParetoChart({
 }: InteractiveParetoChartProps) {
   const [selectedTopic, setSelectedTopic] = useState<TopicCount | null>(null);
 
+  // Check if we have valid data
+  if (!topics || topics.length === 0) {
+    return (
+      <div className="text-center py-12 text-gray-500">
+        <p className="text-lg font-medium mb-2">No Topic Data Available</p>
+        <p className="text-sm">
+          Guest messages need to be analyzed by AI to show topic trends. Topics
+          will appear here once messages are processed.
+        </p>
+      </div>
+    );
+  }
+
   const handleBarClick = (data: { name: string }) => {
     if (!selectedTopic) {
       // User clicked on a topic, drill down to subtopics

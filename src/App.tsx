@@ -7,7 +7,8 @@ import { GuestDashboard } from "./screens/guest/GuestDashboard";
 import { Layout } from "./components/Layout";
 import { HotelDashboard } from "./screens/hotel/HotelDashboard";
 import { ElviraDashboard } from "./screens/elvira/ElviraDashboard";
-import { elviraMenuItems } from "./utils/hotel/menuItems";
+import { Overview as ElviraOverview } from "./screens/elvira/overview";
+import { elviraMenuItems } from "./utils/elvira/menuItems";
 
 function GuestApp() {
   const { guestSession, loading } = useGuestAuth();
@@ -37,6 +38,8 @@ function GuestApp() {
 
 function App() {
   const { user, loading, signOut } = useAuth();
+  const [activeMenuItem, setActiveMenuItem] = useState("overview");
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -62,15 +65,27 @@ function App() {
 
   // Show layout for elvira users
   if (user.role === "elvira") {
+    const renderElviraContent = () => {
+      switch (activeMenuItem) {
+        case "overview":
+          return <ElviraOverview />;
+        case "dashboard":
+          return <ElviraDashboard />;
+        default:
+          return <ElviraOverview />;
+      }
+    };
+
     return (
       <Layout
         user={user}
         onSignOut={signOut}
         menuItems={elviraMenuItems}
-        activeMenuItem="dashboard"
+        activeMenuItem={activeMenuItem}
+        onMenuItemChange={setActiveMenuItem}
         collapsible={true}
       >
-        <ElviraDashboard />
+        {renderElviraContent()}
       </Layout>
     );
   }

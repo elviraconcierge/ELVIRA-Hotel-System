@@ -3,6 +3,7 @@ import { Button, ConfirmationModal } from "../../../../components/ui";
 import { AbsencesTable, AbsenceModal } from "./components";
 import type { AbsenceWithStaff } from "./components/modals";
 import { useDeleteAbsenceRequest } from "../../../../hooks/hotel-staff";
+import { useCurrentUserHotel } from "../../../../hooks";
 
 interface AbsencesProps {
   searchValue: string;
@@ -17,6 +18,35 @@ export function Absences({ searchValue }: AbsencesProps) {
     useState<AbsenceWithStaff | null>(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const deleteAbsenceRequest = useDeleteAbsenceRequest();
+  const { data: currentUser } = useCurrentUserHotel();
+
+  const isHotelStaff = currentUser?.position === "Hotel Staff";
+  const isOwnAbsence = selectedAbsence?.staff_id === currentUser?.staffId;
+
+  // Log for debugging
+  console.log("[Absences] Current user:", {
+    staffId: currentUser?.staffId,
+    position: currentUser?.position,
+    isHotelStaff,
+  });
+
+  console.log("[Absences] Selected absence:", {
+    absenceId: selectedAbsence?.id,
+    absenceStaffId: selectedAbsence?.staff_id,
+    isOwnAbsence,
+  });
+
+  // Hotel Staff can only edit/delete their own absences
+  // They CANNOT edit the status field (only managers can approve/reject)
+  const canEdit = !isHotelStaff || isOwnAbsence;
+  const canDelete = !isHotelStaff || isOwnAbsence;
+
+  console.log("[Absences] Permissions:", {
+    canEdit,
+    canDelete,
+    isHotelStaff,
+    isOwnAbsence,
+  });
 
   const handleAddNew = () => {
     setSelectedAbsence(null);
@@ -31,12 +61,16 @@ export function Absences({ searchValue }: AbsencesProps) {
   };
 
   const handleEdit = () => {
-    setModalMode("edit");
+    if (canEdit) {
+      setModalMode("edit");
+    }
   };
 
   const handleDelete = () => {
-    setIsModalOpen(false);
-    setIsDeleteConfirmOpen(true);
+    if (canDelete) {
+      setIsModalOpen(false);
+      setIsDeleteConfirmOpen(true);
+    }
   };
 
   const handleConfirmDelete = async () => {
@@ -70,7 +104,12 @@ export function Absences({ searchValue }: AbsencesProps) {
         Track staff absences, leaves, and time-off requests.
       </p>
 
-      <AbsencesTable searchValue={searchValue} onRowClick={handleRowClick} />
+      <AbsencesTable
+        searchValue={searchValue}
+        onRowClick={handleRowClick}
+        filterByStaffId={isHotelStaff ? currentUser?.staffId : undefined}
+        canEditStatus={!isHotelStaff} // Hotel Staff cannot edit status
+      />
 
       {/* Unified Absence Modal */}
       <AbsenceModal
@@ -78,8 +117,8 @@ export function Absences({ searchValue }: AbsencesProps) {
         onClose={handleCloseModal}
         absence={selectedAbsence}
         mode={modalMode}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
+        onEdit={canEdit ? handleEdit : undefined}
+        onDelete={canDelete ? handleDelete : undefined}
       />
 
       {/* Delete Confirmation Modal */}

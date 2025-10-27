@@ -39,9 +39,14 @@ interface Task extends Record<string, unknown> {
 interface TasksTableProps {
   searchValue: string;
   onRowClick?: (task: TaskWithStaff) => void;
+  filterByStaffId?: string;
 }
 
-export function TasksTable({ searchValue, onRowClick }: TasksTableProps) {
+export function TasksTable({
+  searchValue,
+  onRowClick,
+  filterByStaffId,
+}: TasksTableProps) {
   const { data: tasksData, isLoading, error } = useCurrentHotelTasks();
   const updateTask = useUpdateTask();
 
@@ -140,7 +145,12 @@ export function TasksTable({ searchValue, onRowClick }: TasksTableProps) {
     () => (data: NonNullable<typeof tasksData>) => {
       if (!data) return [];
 
-      return data.map((task) => {
+      // Filter by staff ID if provided (for Hotel Staff users)
+      const filteredData = filterByStaffId
+        ? data.filter((task) => task.staff_id === filterByStaffId)
+        : data;
+
+      return filteredData.map((task) => {
         const staff = task.assigned_staff;
         const personalData = staff?.hotel_staff_personal_data;
         const assignedName = personalData
@@ -163,7 +173,7 @@ export function TasksTable({ searchValue, onRowClick }: TasksTableProps) {
         } as Task;
       });
     },
-    []
+    [filterByStaffId]
   );
 
   return (

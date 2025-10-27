@@ -48,7 +48,6 @@ async function fetchAIAnalytics(
     )
     .eq("hotel_id", hotelId)
     .eq("sender_type", "guest")
-    .not("topics", "is", null)
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -101,30 +100,34 @@ async function fetchAIAnalytics(
   const topicSubtopicsMap = new Map<string, Map<string, number>>();
 
   messagesWithGuests.forEach((msg) => {
-    if (msg.topics && Array.isArray(msg.topics)) {
+    if (msg.topics && Array.isArray(msg.topics) && msg.topics.length > 0) {
       msg.topics.forEach((topic: string) => {
-        topicMap.set(topic, (topicMap.get(topic) || 0) + 1);
+        if (topic) {
+          // Filter out empty strings
+          topicMap.set(topic, (topicMap.get(topic) || 0) + 1);
 
-        // Track subtopics for each topic
-        if (msg.subtopics) {
-          const subtopics = msg.subtopics.split(",").map((s) => s.trim());
+          // Track subtopics for each topic
+          if (msg.subtopics) {
+            const subtopics = msg.subtopics.split(",").map((s) => s.trim());
 
-          if (!topicSubtopicsMap.has(topic)) {
-            topicSubtopicsMap.set(topic, new Map<string, number>());
-          }
-          const subtopicMap = topicSubtopicsMap.get(topic)!;
-
-          subtopics.forEach((subtopic: string) => {
-            if (subtopic) {
-              subtopicMap.set(subtopic, (subtopicMap.get(subtopic) || 0) + 1);
+            if (!topicSubtopicsMap.has(topic)) {
+              topicSubtopicsMap.set(topic, new Map<string, number>());
             }
-          });
+            const subtopicMap = topicSubtopicsMap.get(topic)!;
+
+            subtopics.forEach((subtopic: string) => {
+              if (subtopic) {
+                subtopicMap.set(subtopic, (subtopicMap.get(subtopic) || 0) + 1);
+              }
+            });
+          }
         }
       });
     }
   });
 
   const sortedTopics = Array.from(topicMap.entries())
+    .filter(([topic]) => topic && topic.trim() !== "") // Filter out empty topics
     .sort((a, b) => b[1] - a[1])
     .slice(0, 15); // Top 15 topics
 

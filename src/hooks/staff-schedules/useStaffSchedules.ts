@@ -45,13 +45,17 @@ export function useStaffSchedules({
         .eq("hotel_id", hotelId)
         .order("schedule_start_date", { ascending: true });
 
-      // Apply filters
-      if (startDate) {
-        query = query.gte("schedule_start_date", startDate);
-      }
+      console.log("[useStaffSchedules] Base query with hotel_id:", hotelId);
 
-      if (endDate) {
-        query = query.lte("schedule_start_date", endDate);
+      // Apply filters
+      if (startDate && endDate) {
+        console.log("[useStaffSchedules] Applying date range filter:", {
+          startDate,
+          endDate,
+        });
+        query = query
+          .lte("schedule_start_date", endDate)
+          .gte("schedule_finish_date", startDate);
       }
 
       if (status && status !== "All Statuses") {
@@ -63,6 +67,17 @@ export function useStaffSchedules({
       }
 
       const { data, error } = await query;
+
+      console.log("[useStaffSchedules] Query result:", {
+        hotelId,
+        startDate,
+        endDate,
+        status,
+        staffId,
+        resultCount: data?.length || 0,
+        data,
+        error,
+      });
 
       if (error) {
         throw error;

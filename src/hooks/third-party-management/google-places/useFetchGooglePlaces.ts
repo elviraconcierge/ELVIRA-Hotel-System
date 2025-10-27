@@ -48,7 +48,8 @@ function mapTypesToCategory(types: string[] = []): string {
 function transformGooglePlaceToSupabase(
   place: GooglePlaceResult,
   category: string,
-  apiResponse: any
+  apiResponse: any,
+  fetchedBy?: string
 ): ThirdPartyPlaceInsert {
   return {
     google_place_id: place.place_id,
@@ -73,6 +74,7 @@ function transformGooglePlaceToSupabase(
     reviews: place.reviews || null, // Include reviews from detailed response
     last_fetched_at: new Date().toISOString(),
     api_response: apiResponse,
+    fetched_by: fetchedBy || null,
   };
 }
 
@@ -85,6 +87,12 @@ export function useFetchAndStoreGooglePlaces() {
       searchParams,
       category,
     }: FetchAndStorePlacesParams) => {
+      // Get current user ID
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const userId = user?.id;
+
       // 1. Fetch from Google Places API
       const googlePlaces = await fetchNearbyPlaces(searchParams);
 
@@ -113,7 +121,8 @@ export function useFetchAndStoreGooglePlaces() {
           const placeData = transformGooglePlaceToSupabase(
             detailedPlace,
             category,
-            { basic: place, detailed: detailedPlace } // Store both responses
+            { basic: place, detailed: detailedPlace }, // Store both responses
+            userId
           );
 
           if (existing) {

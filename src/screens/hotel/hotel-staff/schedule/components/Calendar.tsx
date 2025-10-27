@@ -8,6 +8,7 @@ import type { StaffScheduleWithDetails } from "../../../../../types/staff-schedu
 import { useHotelContext } from "../../../../../hooks/useHotelContext";
 import { useSchedulesByDateRange } from "../../../../../hooks/staff-schedules";
 import { useDeleteStaffSchedule } from "../../../../../hooks/staff-schedules";
+import { useStaffPermissions } from "../../../../../hooks/hotel-staff";
 
 export type { CalendarView };
 
@@ -17,6 +18,7 @@ interface CalendarProps {
 
 export function Calendar({ searchValue }: CalendarProps) {
   const { hotelId } = useHotelContext();
+  const permissions = useStaffPermissions();
   const [currentDate, setCurrentDate] = useState(new Date(2025, 9, 21)); // October 21, 2025
   const [view, setView] = useState<CalendarView>("month");
   const [statusFilter, setStatusFilter] = useState("All Statuses");
@@ -24,6 +26,7 @@ export function Calendar({ searchValue }: CalendarProps) {
     useState<StaffScheduleWithDetails | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreateMode, setIsCreateMode] = useState(false);
+  const [modalMode, setModalMode] = useState<"view" | "edit">("view");
   const [prefilledDate, setPrefilledDate] = useState<Date | null>(null);
   const [isListModalOpen, setIsListModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -86,7 +89,7 @@ export function Calendar({ searchValue }: CalendarProps) {
   };
 
   const dateRange = getDateRange();
-  const { data: schedules = [], isLoading } = useSchedulesByDateRange(
+  const { data: allSchedules = [], isLoading } = useSchedulesByDateRange(
     hotelId || undefined,
     dateRange.start,
     dateRange.end
@@ -118,6 +121,7 @@ export function Calendar({ searchValue }: CalendarProps) {
 
   const handleScheduleClick = (schedule: StaffScheduleWithDetails) => {
     setSelectedSchedule(schedule);
+    setModalMode("view");
     setIsModalOpen(true);
   };
 
@@ -138,6 +142,7 @@ export function Calendar({ searchValue }: CalendarProps) {
 
   const handleScheduleSelectFromList = (schedule: StaffScheduleWithDetails) => {
     setSelectedSchedule(schedule);
+    setModalMode("view");
     setIsModalOpen(true);
   };
 
@@ -151,8 +156,13 @@ export function Calendar({ searchValue }: CalendarProps) {
   const handleCloseCreateModal = () => {
     setIsModalOpen(false);
     setIsCreateMode(false);
+    setModalMode("view");
     setPrefilledDate(null);
     setSelectedSchedule(null);
+  };
+
+  const handleEdit = () => {
+    setModalMode("edit");
   };
 
   const handleDelete = () => {
@@ -197,7 +207,7 @@ export function Calendar({ searchValue }: CalendarProps) {
           view={view}
           searchValue={searchValue}
           statusFilter={statusFilter}
-          schedules={schedules}
+          schedules={allSchedules}
           onScheduleClick={handleScheduleClick}
           onDayClick={handleDayClick}
           onCreateSchedule={handleCreateSchedule}
@@ -214,9 +224,13 @@ export function Calendar({ searchValue }: CalendarProps) {
         isOpen={isModalOpen}
         onClose={handleCloseCreateModal}
         schedule={selectedSchedule}
-        mode={isCreateMode ? "create" : "view"}
+        mode={isCreateMode ? "create" : modalMode}
         prefilledDate={prefilledDate}
+        onEdit={!isCreateMode && selectedSchedule ? handleEdit : undefined}
         onDelete={!isCreateMode && selectedSchedule ? handleDelete : undefined}
+        canEdit={permissions.canEditSchedule()}
+        canDelete={permissions.canDeleteSchedule()}
+        canOnlyEditStatus={permissions.canOnlyEditScheduleStatus()}
       />
       <ConfirmationModal
         isOpen={isDeleteConfirmOpen}

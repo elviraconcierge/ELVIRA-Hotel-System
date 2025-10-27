@@ -11,6 +11,8 @@ export const queryKeys = {
   staff: ["staff"] as const,
   staffMember: (id: string) => ["staff", id] as const,
   staffByHotel: (hotelId: string) => ["staff", "hotel", hotelId] as const,
+  currentUserStaffProfile: (userId: string) =>
+    ["staff", "current-user", userId] as const,
 
   // Schedule-related queries
   schedules: ["schedules"] as const,

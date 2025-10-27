@@ -23,7 +23,6 @@ export interface AbsenceFormData {
   endDate: string;
   status: string;
   notes: string;
-  dataProcessingConsent: boolean;
 }
 
 export interface AbsenceModalProps {
@@ -44,6 +43,8 @@ export interface AbsenceSectionProps {
   disabled?: boolean;
   staffOptions?: Array<{ value: string; label: string }>;
   isLoadingStaff?: boolean;
+  isHotelStaff?: boolean; // Whether the current user is Hotel Staff
+  currentUserName?: string; // Name to display for Hotel Staff
 }
 
 export type { AbsenceRequestRow };

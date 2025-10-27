@@ -1,6 +1,6 @@
 interface StatCardsGridProps {
   children: React.ReactNode;
-  columns?: 2 | 3 | 4;
+  columns?: 2 | 3 | 4 | 5;
 }
 
 export function StatCardsGrid({ children, columns = 4 }: StatCardsGridProps) {
@@ -8,6 +8,7 @@ export function StatCardsGrid({ children, columns = 4 }: StatCardsGridProps) {
     2: "md:grid-cols-2",
     3: "md:grid-cols-3",
     4: "md:grid-cols-4",
+    5: "md:grid-cols-5",
   };
 
   return (

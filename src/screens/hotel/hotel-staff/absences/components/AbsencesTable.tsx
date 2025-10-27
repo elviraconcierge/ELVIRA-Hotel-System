@@ -40,11 +40,24 @@ interface AbsenceRequest extends Record<string, unknown> {
 interface AbsencesTableProps {
   searchValue: string;
   onRowClick?: (absence: AbsenceWithStaff) => void;
+  filterByStaffId?: string;
+  canEditStatus?: boolean; // Whether the current user can edit status
 }
 
-export function AbsencesTable({ searchValue, onRowClick }: AbsencesTableProps) {
+export function AbsencesTable({
+  searchValue,
+  onRowClick,
+  filterByStaffId,
+  canEditStatus = true, // Default to true for backward compatibility
+}: AbsencesTableProps) {
   const { data: absencesData, isLoading, error } = useCurrentHotelAbsences();
   const updateAbsenceRequest = useUpdateAbsenceRequest();
+
+  console.log("[AbsencesTable] Props:", {
+    filterByStaffId,
+    canEditStatus,
+    dataLength: absencesData?.length || 0,
+  });
 
   // Status options for absence requests (memoized)
   const absenceStatusOptions = useMemo(
@@ -55,12 +68,25 @@ export function AbsencesTable({ searchValue, onRowClick }: AbsencesTableProps) {
   // Handle status change (wrapped in useCallback)
   const handleStatusChange = useCallback(
     async (requestId: string, newStatus: string) => {
+      console.log("[AbsencesTable] Status change attempt:", {
+        requestId,
+        newStatus,
+        canEditStatus,
+      });
+
+      if (!canEditStatus) {
+        console.warn(
+          "[AbsencesTable] Status change blocked: User does not have permission"
+        );
+        return;
+      }
+
       await updateAbsenceRequest.mutateAsync({
         requestId,
         updates: { status: newStatus },
       });
     },
-    [updateAbsenceRequest]
+    [updateAbsenceRequest, canEditStatus]
   );
 
   // Define table columns
@@ -113,14 +139,16 @@ export function AbsencesTable({ searchValue, onRowClick }: AbsencesTableProps) {
           <StatusBadge
             status={String(value)}
             statusOptions={absenceStatusOptions}
-            onStatusChange={(newStatus: string) =>
-              handleStatusChange(row.id, newStatus)
+            onStatusChange={
+              canEditStatus
+                ? (newStatus: string) => handleStatusChange(row.id, newStatus)
+                : undefined // Disable status change when undefined
             }
           />
         ),
       },
     ],
-    [absenceStatusOptions, handleStatusChange]
+    [absenceStatusOptions, handleStatusChange, canEditStatus]
   );
 
   // Transform raw data into table format
@@ -128,7 +156,21 @@ export function AbsencesTable({ searchValue, onRowClick }: AbsencesTableProps) {
     () => (data: NonNullable<typeof absencesData>) => {
       if (!data) return [];
 
-      return data.map((absence) => {
+      console.log("[AbsencesTable] Transform data:", {
+        totalRecords: data.length,
+        filterByStaffId,
+      });
+
+      // Filter by staff ID if provided (for Hotel Staff users)
+      const filteredData = filterByStaffId
+        ? data.filter((absence) => absence.staff_id === filterByStaffId)
+        : data;
+
+      console.log("[AbsencesTable] After filtering:", {
+        filteredCount: filteredData.length,
+      });
+
+      return filteredData.map((absence) => {
         const staff = absence.staff;
         const personalData = staff?.hotel_staff_personal_data;
         const staffName = personalData
@@ -156,7 +198,7 @@ export function AbsencesTable({ searchValue, onRowClick }: AbsencesTableProps) {
         } as AbsenceRequest;
       });
     },
-    []
+    [filterByStaffId]
   );
 
   return (

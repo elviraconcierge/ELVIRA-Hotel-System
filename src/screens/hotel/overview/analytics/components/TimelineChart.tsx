@@ -25,10 +25,6 @@ type ViewMode = "topics" | "sentiment" | "urgency" | "all";
 export function TimelineChart({ data, topTopics }: TimelineChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("all");
 
-  // Debug: log the data
-  console.log("Timeline data:", data);
-  console.log("Top topics:", topTopics);
-
   if (!data || data.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">

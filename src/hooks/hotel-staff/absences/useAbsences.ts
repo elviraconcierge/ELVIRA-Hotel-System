@@ -29,8 +29,6 @@ export function useAbsences(hotelId?: string) {
           notes,
           created_at,
           updated_at,
-          data_processing_consent,
-          consent_date,
           staff:hotel_staff!staff_id (
             id,
             position,
@@ -110,8 +108,7 @@ const { data, error } = await supabase
           notes,
           created_at,
           updated_at,
-          data_processing_consent,
-          consent_date,
+
           staff:hotel_staff!staff_id (
             id,
             position,
@@ -170,8 +167,7 @@ const { data, error } = await supabase
           notes,
           created_at,
           updated_at,
-          data_processing_consent,
-          consent_date,
+
           staff:hotel_staff!staff_id (
             id,
             position,
