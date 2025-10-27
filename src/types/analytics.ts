@@ -146,11 +146,40 @@ export interface OrderTrends {
 export interface StaffAnalytics {
   totalStaff: number;
   activeStaff: number;
-  onDutyStaff: number;
-  onLeaveStaff: number;
-  pendingAbsenceRequests: number;
-  averageResponseTime: number; // in minutes
-  taskCompletionRate: number; // percentage
+  totalSchedules: number;
+  totalAbsences: number;
+  pendingAbsences: number;
+  totalDepartments: number;
+  staffByDepartment: Array<{
+    name: string;
+    value: number;
+  }>;
+  staffByPosition: Array<{
+    name: string;
+    value: number;
+  }>;
+  staffByStatus: Array<{
+    name: string;
+    value: number;
+  }>;
+  schedulesByStatus: Array<{
+    name: string;
+    count: number;
+  }>;
+  absencesByType: Array<{
+    name: string;
+    value: number;
+  }>;
+  absencesByStatus: Array<{
+    name: string;
+    count: number;
+  }>;
+  departmentPerformance: Array<{
+    name: string;
+    completed: number;
+    total: number;
+    rate: number;
+  }>;
 }
 
 export interface StaffPerformance {
