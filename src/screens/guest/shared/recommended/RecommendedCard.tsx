@@ -28,18 +28,38 @@ export const RecommendedCard: React.FC<RecommendedCardProps> = ({
   showPrice = true, // Default to showing price
 }) => {
   return (
-    <button
+    <div
       onClick={onClick}
-      className="flex-shrink-0 w-40 bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden touch-manipulation text-left"
+      className="flex-shrink-0 w-40 bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden touch-manipulation cursor-pointer flex flex-col"
     >
-      {/* Image */}
-      <div className="relative w-full h-32 bg-gray-200 overflow-hidden">
+      {/* Image - Always at top, fixed height */}
+      <div className="relative w-full h-32 bg-gray-200 flex-shrink-0">
         {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={title}
-            className="w-full h-full object-cover"
-          />
+          <>
+            <img
+              src={imageUrl}
+              alt={title}
+              className="w-full h-full object-cover block"
+              onError={(e) => {
+                // Fallback if image fails to load
+                const target = e.target as HTMLImageElement;
+                target.style.display = "none";
+                const parent = target.parentElement;
+                if (parent) {
+                  const fallback = parent.querySelector(
+                    ".fallback-placeholder"
+                  );
+                  if (fallback) {
+                    (fallback as HTMLElement).style.display = "flex";
+                  }
+                }
+              }}
+            />
+            {/* Fallback placeholder - hidden by default */}
+            <div className="fallback-placeholder hidden w-full h-full absolute top-0 left-0 items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+              <span className="text-gray-400 text-xs">Image unavailable</span>
+            </div>
+          </>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
             <span className="text-gray-400 text-xs">No image</span>
@@ -53,8 +73,8 @@ export const RecommendedCard: React.FC<RecommendedCardProps> = ({
         )}
       </div>
 
-      {/* Content */}
-      <div className="p-3">
+      {/* Content - Flexible height */}
+      <div className="p-3 flex-1 flex flex-col">
         <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 mb-1">
           {title}
         </h3>
@@ -62,13 +82,13 @@ export const RecommendedCard: React.FC<RecommendedCardProps> = ({
           {description}
         </p>
         {category && (
-          <div className="text-center">
-            <span className="inline-block text-xs text-blue-600 font-medium">
+          <div className="text-center mt-auto">
+            <span className="inline-block text-xs text-blue-600 font-medium capitalize">
               {category}
             </span>
           </div>
         )}
       </div>
-    </button>
+    </div>
   );
 };

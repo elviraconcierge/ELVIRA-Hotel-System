@@ -90,21 +90,29 @@ export const RecommendedSection: React.FC<RecommendedSectionProps> = ({
       </div>
 
       {/* Horizontal Scrollable Cards */}
-      <div ref={scrollRef} className="overflow-x-auto scrollbar-hide">
-        <div className="flex gap-3 px-4 pb-2">
-          {items.map((item) => (
-            <RecommendedCard
-              key={item.id}
-              id={item.id}
-              title={item.title}
-              description={item.description}
-              price={item.price}
-              imageUrl={item.imageUrl}
-              category={item.category}
-              showPrice={showPrice}
-              onClick={() => onItemClick?.(item)}
-            />
-          ))}
+      <div className="relative">
+        {/* Left fade effect */}
+        <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+
+        {/* Right fade effect */}
+        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+
+        <div ref={scrollRef} className="overflow-x-auto scrollbar-hide">
+          <div className="flex gap-3 px-4 pb-2">
+            {items.map((item) => (
+              <RecommendedCard
+                key={item.id}
+                id={item.id}
+                title={item.title}
+                description={item.description}
+                price={item.price}
+                imageUrl={item.imageUrl}
+                category={item.category}
+                showPrice={showPrice}
+                onClick={() => onItemClick?.(item)}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </section>

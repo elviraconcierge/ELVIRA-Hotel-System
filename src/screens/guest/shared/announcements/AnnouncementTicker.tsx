@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 
 interface Announcement {
   id: string;
@@ -14,23 +14,12 @@ export const AnnouncementTicker: React.FC<AnnouncementTickerProps> = ({
   announcements = [],
   className = "",
 }) => {
-  useEffect(() => {
-    console.log(
-      "📢 AnnouncementTicker - Total announcements:",
-      announcements.length
-    );
-    console.log("📢 Announcements data:", announcements);
-  }, [announcements]);
-
   if (announcements.length === 0) {
-    console.log("⚠️ No announcements to display");
     return null;
   }
 
   // Combine all announcements into a single string with separator
   const allAnnouncements = announcements.map((a) => a.message).join("  •  ");
-
-  console.log("✅ Ticker content:", allAnnouncements);
 
   return (
     <div

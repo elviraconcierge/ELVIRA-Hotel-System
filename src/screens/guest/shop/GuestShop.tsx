@@ -1,8 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { useGuestAuth } from "../../../contexts/guest";
-import { GuestHeader } from "../shared/header";
-import { GuestBottomNav } from "../shared/navigation";
-import { AnnouncementTicker } from "../shared/announcements";
+import { GuestPageLayout } from "../shared/layout";
+import { SearchFilterBar } from "../shared/search-filter";
 import { useAnnouncements } from "../../../hooks/announcements/useAnnouncements";
 
 interface GuestShopProps {
@@ -15,8 +14,11 @@ export const GuestShop: React.FC<GuestShopProps> = ({
   currentPath = "/guest/shop",
 }) => {
   const { guestSession } = useGuestAuth();
-  const { data: announcements, isLoading: announcementsLoading } =
-    useAnnouncements(guestSession?.guestData?.hotel_id);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const { data: announcements } = useAnnouncements(
+    guestSession?.guestData?.hotel_id
+  );
 
   if (!guestSession) {
     return null;
@@ -34,29 +36,31 @@ export const GuestShop: React.FC<GuestShopProps> = ({
       })) || [];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header */}
-      <GuestHeader
-        guestName={guestData.guest_name}
-        hotelName={hotelData.name}
-        roomNumber={guestData.room_number}
-        guestId={guestData.id}
-        dndStatus={guestData.dnd_status}
-      />
-
-      {/* Announcements Ticker */}
-      {!announcementsLoading && activeAnnouncements.length > 0 && (
-        <AnnouncementTicker announcements={activeAnnouncements} />
-      )}
-
-      {/* Main Content */}
-      <main className="flex-1 pb-20 px-4 py-6">
+    <GuestPageLayout
+      guestName={guestData.guest_name}
+      hotelName={hotelData.name}
+      roomNumber={guestData.room_number}
+      guestId={guestData.id}
+      dndStatus={guestData.dnd_status}
+      announcements={activeAnnouncements}
+      currentPath={currentPath}
+      onNavigate={onNavigate}
+      headerSlot={
+        <SearchFilterBar
+          searchValue={searchQuery}
+          onSearchChange={setSearchQuery}
+          onFilterClick={() => {
+            // Handle filter click
+            console.log("Filter clicked");
+          }}
+          placeholder="Search products..."
+        />
+      }
+    >
+      <div className="px-4 py-6">
         <h2 className="text-xl font-bold text-gray-900 mb-4">Guest Shop</h2>
         {/* Add your shop content here */}
-      </main>
-
-      {/* Bottom Navigation */}
-      <GuestBottomNav currentPath={currentPath} onNavigate={onNavigate} />
-    </div>
+      </div>
+    </GuestPageLayout>
   );
 };

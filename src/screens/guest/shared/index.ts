@@ -9,3 +9,13 @@ export {
   RecommendedCard,
   type RecommendedItem,
 } from "./recommended";
+export { AboutUsSection } from "./about-us";
+export { PhotoGallerySection } from "./photo-gallery";
+export { EmergencyContactsSection } from "./emergency-contacts";
+export { SearchFilterBar } from "./search-filter";
+export {
+  MenuItemCard,
+  MenuCategorySection,
+  type MenuItemCardProps,
+} from "./cards/menu-item";
+export { GuestPageLayout } from "./layout";
